@@ -1,7 +1,11 @@
 use ark_ff::{AdditiveGroup, Field};
 use ark_test_curves::bls12_381::Fr;
+use itertools::Itertools;
 
-use std::{ops::Add, ops::Mul};
+use std::{
+    collections::HashMap,
+    ops::{Add, Mul},
+};
 
 fn main() {
     let _ = fr!(5) * EqMLE::new("x", &vec![true, true]) * EqMLE::new("x", &vec![true, false]);
@@ -11,52 +15,61 @@ fn main() {
         + fr!(44) * EqMLE::new("x", &vec![false, true])
         + fr!(55) * EqMLE::new("x", &vec![false, false]);
 
-    assert_eq!(f_mle.clone().evaluate("x", &vec![true, true]), fr!(22));
-    assert_eq!(f_mle.clone().evaluate("x", &vec![true, false]), fr!(33));
-    assert_eq!(f_mle.clone().evaluate("x", &vec![false, true]), fr!(44));
-    assert_eq!(f_mle.clone().evaluate("x", &vec![false, false]), fr!(55));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![true, true]).fin(), fr!(22));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![true, false]).fin(), fr!(33));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![false, true]).fin(), fr!(44));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![false, false]).fin(), fr!(55));
 }
 
-/*
-
-Π(x_i - 1) * Π(y_i - 1)
-*/
-
-type XProdTerms = (Fr, Vec<bool>);
-type YProdTerms = (Fr, Vec<bool>);
-#[derive(Clone)]
-pub struct _EqMLE {
-    sum: Vec<(XProdTerms, YProdTerms)>,
-    coeff: Fr,
-}
-
-
+type ProdTerms = (Fr, Vec<bool>);
 #[derive(Clone)]
 pub struct EqMLE {
-    name: String,
-    sum: Vec<(Fr, Vec<bool>)>,
+    sum: Vec<(Fr, HashMap<String, ProdTerms>)>,
     coeff: Fr,
 }
 
 impl EqMLE {
-    pub fn new(name: &str, booleans: &[bool]) -> Self {
+    pub fn new(variable: &str, booleans: &[bool]) -> Self {
+        let mut map = HashMap::new();
+        map.insert(
+            variable.to_string(),
+            (fr!(1), booleans.iter().map(|b| *b).collect()),
+        );
         Self {
-            name: name.to_string(),
-            sum: vec![(fr!(1), booleans.to_vec())],
+            sum: vec![(fr!(1), map)],
             coeff: fr!(1),
         }
     }
-    pub fn evaluate(self, name: &str, x: &[bool]) -> Fr {
-        assert_eq!(self.name, name);
-        let mut sum = fr!(0);
-        for (coeff, prod_terms) in self.sum {
-            assert_eq!(x.len(), prod_terms.len());
-            // 一つでも異なる組があればこのproductは0になる。
-            if x.iter().zip(prod_terms.iter()).all(|(x_i, t_i)| x_i == t_i) {
-                sum += coeff
+    pub fn evaluate(self, variable: &str, v: &[bool]) -> Self {
+        let mut sum = vec![];
+
+        for sum_term in self.sum {
+            let (coeff, mut map) = sum_term;
+
+            let (v_coeff, v_prod_terms) = map.remove(variable).expect("msg");
+            // 全て一致していれば、このsum_termは0にはならないので、sumに再び加える。
+            if v.iter()
+                .zip(v_prod_terms.iter())
+                .all(|(v_i, t_i)| v_i == t_i)
+            {
+                sum.push((coeff * v_coeff, map)) //変数に値を入れて評価して得られた点は係数にまとめる。
             }
         }
-        self.coeff * sum
+
+        Self {
+            sum,
+            coeff: self.coeff,
+        }
+    }
+
+    pub fn fin(self) -> Fr {
+        let mut sum = fr!(0);
+        for (coeff, map) in self.sum {
+            assert!(map.len() == 0);
+            sum += coeff
+        }
+
+        sum
     }
 }
 
@@ -67,25 +80,45 @@ impl Mul for EqMLE {
     fn mul(self, rhs: Self) -> Self::Output {
         let mut sum = vec![];
 
-        for (coeff_0, eq_prod_0) in self.sum {
-            'outer: for (coeff_1, eq_prod_1) in &rhs.sum {
-                assert_eq!(eq_prod_0.len(), eq_prod_1.len());
-                let mut terms = vec![];
-                for (b, _b) in eq_prod_0.iter().zip(eq_prod_1) {
-                    if b == _b {
-                        terms.push(*b)
-                    } else {
-                        // もし二つのbooleanが異なれば、そのeq~のproductは全て0になるので、sumには加えない。
-                        break 'outer;
+        for self_sum_term in &self.sum {
+            'outer: for rhs_sum_term in &rhs.sum {
+                // mapの共通するvariable同士を掛け合わせる。
+                let (coeff_0, map_0) = self_sum_term;
+                let (coeff_1, map_1) = rhs_sum_term;
+
+                let mut new_map = HashMap::new();
+
+                // 同じsum_termにある全ての変数に対して。
+                for variable in map_0.keys().chain(map_1.keys()).sorted().dedup() {
+                    match (map_0.get(variable), map_1.get(variable)) {
+                        (None, None) => panic!(),
+                        (None, Some(v)) => {new_map.insert(variable.to_string(), v.clone());},
+                        (Some(v), None) => {new_map.insert(variable.to_string(), v.clone());},
+                        (Some(v0), Some(v1)) => {
+                            let (coeff_v0, prod_terms_v0) = v0;
+                            let (coeff_v1, prod_terms_v1) = v1;
+                            // 掛け合わせたprod_termが0にならないかを調べる。
+                            let mut new_prod_terms = vec![];
+                            for (b, _b) in prod_terms_v0.into_iter().zip(prod_terms_v1) {
+                                if b == _b {
+                                    new_prod_terms.push(*b);
+                                } else {
+                                    // もし、評価した結果が0になるのなら、このsum_termは0になるので、次に移動する。
+                                    break 'outer;
+                                }
+                            }
+                            new_map.insert(variable.to_string(), (coeff_v0*coeff_v1, new_prod_terms));
+                        },
                     };
                 }
-                sum.push((coeff_0 * coeff_1, terms));
+
+                sum.push((coeff_0*coeff_1, new_map))
             }
         }
+
         EqMLE {
             sum,
             coeff: self.coeff * rhs.coeff,
-            name: self.name //todo
         }
     }
 }
@@ -97,17 +130,16 @@ impl Add for EqMLE {
         let sum_0: Vec<_> = self
             .sum
             .into_iter()
-            .map(|(coeff, prod_terms)| (coeff * self.coeff, prod_terms))
+            .map(|(coeff, map)| (coeff * self.coeff, map))
             .collect();
         let sum_1: Vec<_> = rhs
             .sum
             .into_iter()
-            .map(|(coeff, prod_terms)| (coeff * rhs.coeff, prod_terms))
+            .map(|(coeff, map)| (coeff * rhs.coeff, map))
             .collect();
         Self {
             sum: sum_0.into_iter().chain(sum_1).collect(),
             coeff: fr!(1),
-            name: self.name //todo
         }
     }
 }

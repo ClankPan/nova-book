@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 ark-ff = "0.5"
 ark-test-curves = { version = "0.5.0", features = ["bls12_381_scalar_field"]}
+itertools = "0.14.0"
