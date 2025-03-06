@@ -23,7 +23,7 @@ impl MLE {
         let mut map = HashMap::new();
         map.insert(
             variable.to_string(),
-            (fr!(1), booleans.iter().map(|b| *b).collect()),
+            (fr!(1), booleans.to_vec()),
         );
         Self {
             sum: vec![(fr!(1), map)],
@@ -62,7 +62,7 @@ impl MLE {
     pub fn fin(self) -> Result<Fr, ()> {
         let mut sum = fr!(0);
         for (coeff, map) in self.sum {
-            if map.len() != 0 {
+            if !map.is_empty() {
                 return Err(());
             }
             sum += coeff
@@ -102,7 +102,7 @@ impl Mul for MLE {
                             let (coeff_v1, prod_terms_v1) = v1;
                             // 掛け合わせたprod_termが0にならないかを調べる。
                             let mut new_prod_terms = vec![];
-                            for (b, _b) in prod_terms_v0.into_iter().zip(prod_terms_v1) {
+                            for (b, _b) in prod_terms_v0.iter().zip(prod_terms_v1) {
                                 if b == _b {
                                     new_prod_terms.push(*b);
                                 } else {
@@ -231,17 +231,17 @@ mod tests {
 
     #[test]
     fn check_mle() {
-        let _ = fr!(5) * MLE::eq("x", &vec![true, true]) * MLE::eq("x", &vec![true, false]);
+        let _ = fr!(5) * MLE::eq("x", &[true, true]) * MLE::eq("x", &[true, false]);
 
-        let f_mle = fr!(22) * MLE::eq("x", &vec![true, true])
-            + fr!(33) * MLE::eq("x", &vec![true, false])
-            + fr!(44) * MLE::eq("x", &vec![false, true])
-            + fr!(55) * MLE::eq("x", &vec![false, false]);
+        let f_mle = fr!(22) * MLE::eq("x", &[true, true])
+            + fr!(33) * MLE::eq("x", &[true, false])
+            + fr!(44) * MLE::eq("x", &[false, true])
+            + fr!(55) * MLE::eq("x", &[false, false]);
     
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![true, true])
+                .evaluate("x", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(22)
@@ -249,7 +249,7 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![true, false])
+                .evaluate("x", &[true, false])
                 .fin()
                 .unwrap(),
             fr!(33)
@@ -257,7 +257,7 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![false, true])
+                .evaluate("x", &[false, true])
                 .fin()
                 .unwrap(),
             fr!(44)
@@ -265,18 +265,18 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
+                .evaluate("x", &[false, false])
                 .fin()
                 .unwrap(),
             fr!(55)
         );
     
-        let f_mle = MLE::eq("x", &vec![true, true]) * MLE::eq("y", &vec![true, true]);
+        let f_mle = MLE::eq("x", &[true, true]) * MLE::eq("y", &[true, true]);
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![true, true])
-                .evaluate("y", &vec![true, true])
+                .evaluate("x", &[true, true])
+                .evaluate("y", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(1)
@@ -284,8 +284,8 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("y", &vec![true, true])
-                .evaluate("x", &vec![true, true])
+                .evaluate("y", &[true, true])
+                .evaluate("x", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(1)
@@ -294,8 +294,8 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![false, true])
-                .evaluate("y", &vec![true, true])
+                .evaluate("x", &[false, true])
+                .evaluate("y", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(0)
@@ -303,8 +303,8 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![true, false])
-                .evaluate("y", &vec![true, true])
+                .evaluate("x", &[true, false])
+                .evaluate("y", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(0)
@@ -312,8 +312,8 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
-                .evaluate("y", &vec![true, true])
+                .evaluate("x", &[false, false])
+                .evaluate("y", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(0)
@@ -321,8 +321,8 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![false, true])
-                .evaluate("y", &vec![false, true])
+                .evaluate("x", &[false, true])
+                .evaluate("y", &[false, true])
                 .fin()
                 .unwrap(),
             fr!(0)
@@ -330,8 +330,8 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![true, false])
-                .evaluate("y", &vec![true, false])
+                .evaluate("x", &[true, false])
+                .evaluate("y", &[true, false])
                 .fin()
                 .unwrap(),
             fr!(0)
@@ -339,19 +339,19 @@ mod tests {
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
-                .evaluate("y", &vec![false, false])
+                .evaluate("x", &[false, false])
+                .evaluate("y", &[false, false])
                 .fin()
                 .unwrap(),
             fr!(0)
         );
     
-        let f_mle = MLE::eq("x", &vec![true, true]) + MLE::eq("y", &vec![true, true]);
+        let f_mle = MLE::eq("x", &[true, true]) + MLE::eq("y", &[true, true]);
         assert_eq!(
             f_mle
                 .clone()
-                .evaluate("x", &vec![true, true])
-                .evaluate("y", &vec![true, true])
+                .evaluate("x", &[true, true])
+                .evaluate("y", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(2)
