@@ -1,28 +1,33 @@
 use ark_ff::{AdditiveGroup, Field};
 use ark_test_curves::bls12_381::Fr;
 
-use std::{num::NonZero, ops::Mul};
+use std::{num::NonZero, ops::Add, ops::Mul};
 
 fn main() {
-    let aa = fr!(5) * EqMLE::new(vec![fr!(0), fr!(1)]) * EqMLE::new(vec![fr!(0), fr!(1)]);
+    let aa = fr!(5) * EqMLE::new("x", &vec![true, true]) * EqMLE::new("x", &vec![true, false]);
+
+    let aaa = fr!(2) * EqMLE::new("x", &vec![true, true])
+        + fr!(3) * EqMLE::new("x", &vec![true, false])
+        + fr!(4) * EqMLE::new("x", &vec![false, true])
+        + fr!(5) * EqMLE::new("x", &vec![false, false]);
 }
 
 pub enum EqTerm {
     Zero,
-    Bool(bool)
+    Bool(bool),
 }
 
 pub struct EqMLE {
     // name: String,
-    sum: Vec<(Fr, Vec<EqTerm>)>,
-    coeff: Fr
+    sum: Vec<(Fr, Vec<bool>)>,
+    coeff: Fr,
 }
 
 impl EqMLE {
     pub fn new(_name: &str, booleans: &[bool]) -> Self {
         Self {
             // name: name.to_string(),
-            sum: vec![(fr!(1), booleans.iter().map(|b|EqTerm::Bool(*b)).collect())],
+            sum: vec![(fr!(1), booleans.to_vec())],
             coeff: fr!(1),
         }
     }
@@ -33,46 +38,46 @@ impl Mul for EqMLE {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-
         let mut sum = vec![];
-        
-        for (coeff_x, prod_x) in self.sum {
-            for (coeff_y, prod_y) in &rhs.sum {
-                for t in prod_x.iter().zip(prod_y) {
-                    match t {
-                        (EqTerm::Zero, EqTerm::Zero) => EqTerm::Zero,
-                        (EqTerm::Zero, EqTerm::Bool(_)) => EqTerm::Zero,
-                        (EqTerm::Bool(_), EqTerm::Zero) => EqTerm::Zero,
-                        (EqTerm::Bool(b), EqTerm::Bool(_b)) => {
-                            if b == _b {
-                                EqTerm::Bool(*b)
-                            } else {
-                                EqTerm::Zero
-                            }
-                        },
+
+        for (coeff_0, eq_prod_0) in self.sum {
+            'outer: for (coeff_1, eq_prod_1) in &rhs.sum {
+                let mut terms = vec![];
+                for (b, _b) in eq_prod_0.iter().zip(eq_prod_1) {
+                    if b == _b {
+                        terms.push(*b)
+                    } else {
+                        // もし二つのbooleanが異なれば、そのeq~のproductは全て0になるので、sumには加えない。
+                        break 'outer;
                     };
                 }
-                // let c = prod_x.iter().zip(prod_y).map(|t| {
-                //     match t {
-                //         (EqTerm::Zero, EqTerm::Zero) => EqTerm::Zero,
-                //         (EqTerm::Zero, EqTerm::Bool(_)) => EqTerm::Zero,
-                //         (EqTerm::Bool(_), EqTerm::Zero) => EqTerm::Zero,
-                //         (EqTerm::Bool(b), EqTerm::Bool(_b)) => {
-                //             if b == _b {
-                //                 EqTerm::Bool(*b)
-                //             } else {
-                //                 EqTerm::Zero
-                //             }
-                //         },
-                //     }
-                // }).collect();
-                // sum.push((coeff_x*coeff_y, c))
+                sum.push((coeff_0 * coeff_1, terms));
             }
         }
         EqMLE {
             sum,
             coeff: self.coeff * rhs.coeff,
-            // name: ,
+        }
+    }
+}
+
+impl Add for EqMLE {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        // 係数をsumの中の係数に掛け合わせて消す
+        let sum_0: Vec<_> = self
+            .sum
+            .into_iter()
+            .map(|(coeff, prod_terms)| (coeff * self.coeff, prod_terms))
+            .collect();
+        let sum_1: Vec<_> = rhs
+            .sum
+            .into_iter()
+            .map(|(coeff, prod_terms)| (coeff * rhs.coeff, prod_terms))
+            .collect();
+        Self {
+            sum: sum_0.into_iter().chain(sum_1).collect(),
+            coeff: fr!(1),
         }
     }
 }
@@ -116,8 +121,6 @@ fn all_bit_patterns(n: usize) -> Vec<Vec<Fr>> {
 
     result
 }
-
-
 
 pub fn satisfy_poly(x: Fr, coeffs: &[Fr]) -> bool {
     let mut x_n = Fr::ONE;
