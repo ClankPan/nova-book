@@ -72,7 +72,7 @@ pub fn vector_mle(variable: &str, vector: &[Fr]) -> MLE {
         .unwrap()
 }
 
-pub fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> MLE {
+pub fn matrix_mle(matrix: &[Vec<Fr>]) -> MLE {
     let m = matrix.len();
     let n = matrix[0].len();
     // todo check m,n len are pow of 2
@@ -136,11 +136,11 @@ impl MLE {
         }
     }
 
-    pub fn fin(self) -> Result<Fr, ()> {
+    pub fn fin(self) -> Result<Fr, String> {
         let mut sum = fr!(0);
         for (coeff, map) in self.sum {
             if !map.is_empty() {
-                return Err(());
+                return Err(String::from("empty"));
             }
             sum += coeff
         }
