@@ -375,11 +375,11 @@ mod tests {
 
     #[test]
     fn check_vector_matrix_mle() {
-        let z_mle = vector_mle(&vec![fr!(11), fr!(22), fr!(33), fr!(44)]);
+        let z_mle = vector_mle(&[fr!(11), fr!(22), fr!(33), fr!(44)]);
         assert_eq!(
             z_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
+                .evaluate("x", &[false, false])
                 .fin()
                 .unwrap(),
             fr!(11)
@@ -387,7 +387,7 @@ mod tests {
         assert_eq!(
             z_mle
                 .clone()
-                .evaluate("x", &vec![false, true])
+                .evaluate("x", &[false, true])
                 .fin()
                 .unwrap(),
             fr!(22)
@@ -395,7 +395,7 @@ mod tests {
         assert_eq!(
             z_mle
                 .clone()
-                .evaluate("x", &vec![true, false])
+                .evaluate("x", &[true, false])
                 .fin()
                 .unwrap(),
             fr!(33)
@@ -403,7 +403,7 @@ mod tests {
         assert_eq!(
             z_mle
                 .clone()
-                .evaluate("x", &vec![true, true])
+                .evaluate("x", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(44)
@@ -419,8 +419,8 @@ mod tests {
         assert_eq!(
             m_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
-                .evaluate("y", &vec![false, false])
+                .evaluate("x", &[false, false])
+                .evaluate("y", &[false, false])
                 .fin()
                 .unwrap(),
             fr!(11)
@@ -428,8 +428,8 @@ mod tests {
         assert_eq!(
             m_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
-                .evaluate("y", &vec![false, true])
+                .evaluate("x", &[false, false])
+                .evaluate("y", &[false, true])
                 .fin()
                 .unwrap(),
             fr!(21)
@@ -437,8 +437,8 @@ mod tests {
         assert_eq!(
             m_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
-                .evaluate("y", &vec![true, false])
+                .evaluate("x", &[false, false])
+                .evaluate("y", &[true, false])
                 .fin()
                 .unwrap(),
             fr!(31)
@@ -446,8 +446,8 @@ mod tests {
         assert_eq!(
             m_mle
                 .clone()
-                .evaluate("x", &vec![false, false])
-                .evaluate("y", &vec![true, true])
+                .evaluate("x", &[false, false])
+                .evaluate("y", &[true, true])
                 .fin()
                 .unwrap(),
             fr!(41)
@@ -455,8 +455,8 @@ mod tests {
         assert_eq!(
             m_mle
                 .clone()
-                .evaluate("x", &vec![false, true])
-                .evaluate("y", &vec![false, false])
+                .evaluate("x", &[false, true])
+                .evaluate("y", &[false, false])
                 .fin()
                 .unwrap(),
             fr!(12)
@@ -464,8 +464,8 @@ mod tests {
         assert_eq!(
             m_mle
                 .clone()
-                .evaluate("x", &vec![false, true])
-                .evaluate("y", &vec![false, true])
+                .evaluate("x", &[false, true])
+                .evaluate("y", &[false, true])
                 .fin()
                 .unwrap(),
             fr!(22)
