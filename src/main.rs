@@ -8,7 +8,11 @@ use std::{
     vec,
 };
 
-fn main() {}
+fn main() {
+    MLE::eq("x",&bvec![0,1,1]);
+    vector_mle(&frvec![0,1,1]);
+    matrix_mle(&frmatrix!([0,1,1], [0,0,0]));
+}
 
 type ProdTerms = (Fr, Vec<bool>);
 #[derive(Clone)]
@@ -240,6 +244,173 @@ macro_rules! fr {
         ark_test_curves::bls12_381::Fr::from($val)
     };
 }
+
+#[macro_export]
+macro_rules! bvec {
+    // パターン: カンマ区切りの式 (expr) 列
+    ($($val:expr),* $(,)?) => {
+        {
+            let mut temp = Vec::new();
+            $(
+                let num = $val;
+                // 0か1以外ならアサート失敗
+                assert!(
+                    num == 0 || num == 1,
+                    "boolvec!: invalid value `{}`, allowed only 0 or 1", num
+                );
+                // 0→false, 1→true としてpush
+                temp.push(num == 1);
+            )*
+            temp
+        }
+    };
+}
+#[macro_export]
+macro_rules! frvec {
+    // パターン: カンマ区切りの式 (expr) 列
+    ($($val:expr),* $(,)?) => {
+        {
+            let mut temp = Vec::new();
+            $(
+                let num = $val;
+                // 0か1以外ならアサート失敗
+                assert!(
+                    num == 0 || num == 1,
+                    "boolvec!: invalid value `{}`, allowed only 0 or 1", num
+                );
+                if num == 1 {
+                    temp.push(Fr::ONE);
+                } else {
+                    temp.push(Fr::ZERO);
+                }
+            )*
+            temp
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! bmatrix {
+    // 
+    // 複数の [ ... ] (それぞれ1行) を並べる形
+    (
+        $(
+            [ $($val:expr),* $(,)? ]
+        ),* $(,)?
+    ) => {{
+        let mut outer = Vec::new();
+        
+        // まだ列数が確定していないので Option<usize> を使う
+        let mut expected_cols: Option<usize> = None;
+
+        $(
+            let mut row_vec = Vec::new();
+            let mut col_count = 0;
+
+            // 各要素に対してチェック
+            $(
+                let num = $val;
+                // 0か1以外ならアサート失敗
+                assert!(
+                    num == 0 || num == 1,
+                    "bmat!: invalid value `{}`, allowed only 0 or 1", 
+                    num
+                );
+                row_vec.push(num == 1);
+                col_count += 1;
+            )*
+
+            // 初回行で列数を確定し、それ以降は照合する
+            match expected_cols {
+                Some(c) => {
+                    // もし今回の行が c 列と異なるならエラー
+                    assert!(
+                        col_count == c,
+                        "bmat!: row has length {}, but previous row(s) had length {}",
+                        col_count, c
+                    );
+                },
+                None => {
+                    // まだ列数が未定 => 今回の列数を採用
+                    expected_cols = Some(col_count);
+                }
+            }
+
+            outer.push(row_vec);
+        )*
+
+        // 結果: Vec<Vec<bool>>
+        outer
+    }};
+}
+#[macro_export]
+macro_rules! frmatrix {
+    (
+        $(
+            [ $($val:expr),* $(,)? ]
+        ),* $(,)?
+    ) => {{
+        let mut outer = Vec::new();
+        // 列数がまだ未定 → Option
+        let mut expected_cols: Option<usize> = None;
+        
+        // 行ループ用カウンタ（メッセージ表示に使う）
+        let mut row_idx = 0_usize;
+
+        $(
+            let mut row_vec = Vec::new();
+            let mut col_count = 0;
+
+            // 各セルをチェック・変換
+            $(
+                let num = $val;
+                assert!(
+                    num == 0 || num == 1,
+                    "frmatrix!: invalid value `{}`, allowed only 0 or 1",
+                    num
+                );
+                row_vec.push(
+                    if num == 1 {
+                        ark_test_curves::bls12_381::Fr::ONE
+                    } else {
+                        ark_test_curves::bls12_381::Fr::ZERO
+                    }
+                );
+                col_count += 1;
+            )*
+
+            // 列数チェック
+            match expected_cols {
+                Some(c) => {
+                    assert!(
+                        col_count == c,
+                        "frmatrix!: row {} has length {}, but expected {} cols",
+                        row_idx, col_count, c
+                    );
+                },
+                None => {
+                    // 初回行で列数確定
+                    expected_cols = Some(col_count);
+                }
+            }
+
+            outer.push(row_vec);
+            row_idx += 1;
+        )*
+
+        // もし expected_cols が None なら行が0件だった
+        // 一応読んでおけば unused にならない & 意図的に許容する
+        if let Some(cols) = expected_cols {
+            // 行数 row_idx, 列数 cols が最終的に確定した形
+            // 必要ならここでさらに assert!してもよい
+            let _ = (row_idx, cols); // 例: ここで何か使うなら
+        }
+
+        outer // => Vec<Vec<ark_test_curves::bls12_381::Fr>>
+    }};
+}
+
+
 
 #[cfg(test)]
 mod tests {
