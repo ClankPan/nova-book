@@ -8,28 +8,18 @@ use std::{
 };
 
 fn main() {
-    let _ = fr!(5) * EqMLE::new("x", &vec![true, true]) * EqMLE::new("x", &vec![true, false]);
-
-    let f_mle = fr!(22) * EqMLE::new("x", &vec![true, true])
-        + fr!(33) * EqMLE::new("x", &vec![true, false])
-        + fr!(44) * EqMLE::new("x", &vec![false, true])
-        + fr!(55) * EqMLE::new("x", &vec![false, false]);
-
-    assert_eq!(f_mle.clone().evaluate("x", &vec![true, true]).fin(), fr!(22));
-    assert_eq!(f_mle.clone().evaluate("x", &vec![true, false]).fin(), fr!(33));
-    assert_eq!(f_mle.clone().evaluate("x", &vec![false, true]).fin(), fr!(44));
-    assert_eq!(f_mle.clone().evaluate("x", &vec![false, false]).fin(), fr!(55));
+ 
 }
 
 type ProdTerms = (Fr, Vec<bool>);
 #[derive(Clone)]
-pub struct EqMLE {
+pub struct MLE {
     sum: Vec<(Fr, HashMap<String, ProdTerms>)>,
     coeff: Fr,
 }
 
-impl EqMLE {
-    pub fn new(variable: &str, booleans: &[bool]) -> Self {
+impl MLE {
+    pub fn eq(variable: &str, booleans: &[bool]) -> Self {
         let mut map = HashMap::new();
         map.insert(
             variable.to_string(),
@@ -44,15 +34,22 @@ impl EqMLE {
         let mut sum = vec![];
 
         for sum_term in self.sum {
+
             let (coeff, mut map) = sum_term;
 
-            let (v_coeff, v_prod_terms) = map.remove(variable).expect("msg");
-            // 全て一致していれば、このsum_termは0にはならないので、sumに再び加える。
-            if v.iter()
-                .zip(v_prod_terms.iter())
-                .all(|(v_i, t_i)| v_i == t_i)
-            {
-                sum.push((coeff * v_coeff, map)) //変数に値を入れて評価して得られた点は係数にまとめる。
+            match map.remove(variable) {
+                Some((v_coeff, v_prod_terms)) => {
+                    // 全て一致していれば、このsum_termは0にはならないので、sumに再び加える。
+                    if v.iter()
+                        .zip(v_prod_terms.iter())
+                        .all(|(v_i, t_i)| v_i == t_i)
+                    {
+                        sum.push((coeff * v_coeff, map)); //変数に値を入れて評価して得られた点は係数にまとめる。
+                    }
+                }
+                None => {
+                    sum.push((coeff, map));
+                }
             }
         }
 
@@ -62,19 +59,21 @@ impl EqMLE {
         }
     }
 
-    pub fn fin(self) -> Fr {
+    pub fn fin(self) -> Result<Fr, ()> {
         let mut sum = fr!(0);
         for (coeff, map) in self.sum {
-            assert!(map.len() == 0);
+            if map.len() != 0 {
+                return Err(());
+            }
             sum += coeff
         }
 
-        sum
+        Ok(sum)
     }
 }
 
 // EqMLE * EqMLE
-impl Mul for EqMLE {
+impl Mul for MLE {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -92,8 +91,12 @@ impl Mul for EqMLE {
                 for variable in map_0.keys().chain(map_1.keys()).sorted().dedup() {
                     match (map_0.get(variable), map_1.get(variable)) {
                         (None, None) => panic!(),
-                        (None, Some(v)) => {new_map.insert(variable.to_string(), v.clone());},
-                        (Some(v), None) => {new_map.insert(variable.to_string(), v.clone());},
+                        (None, Some(v)) => {
+                            new_map.insert(variable.to_string(), v.clone());
+                        }
+                        (Some(v), None) => {
+                            new_map.insert(variable.to_string(), v.clone());
+                        }
                         (Some(v0), Some(v1)) => {
                             let (coeff_v0, prod_terms_v0) = v0;
                             let (coeff_v1, prod_terms_v1) = v1;
@@ -107,23 +110,26 @@ impl Mul for EqMLE {
                                     break 'outer;
                                 }
                             }
-                            new_map.insert(variable.to_string(), (coeff_v0*coeff_v1, new_prod_terms));
-                        },
+                            new_map.insert(
+                                variable.to_string(),
+                                (coeff_v0 * coeff_v1, new_prod_terms),
+                            );
+                        }
                     };
                 }
 
-                sum.push((coeff_0*coeff_1, new_map))
+                sum.push((coeff_0 * coeff_1, new_map))
             }
         }
 
-        EqMLE {
+        MLE {
             sum,
             coeff: self.coeff * rhs.coeff,
         }
     }
 }
 
-impl Add for EqMLE {
+impl Add for MLE {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         // 係数をsumの中の係数に掛け合わせて消す
@@ -132,11 +138,13 @@ impl Add for EqMLE {
             .into_iter()
             .map(|(coeff, map)| (coeff * self.coeff, map))
             .collect();
+
         let sum_1: Vec<_> = rhs
             .sum
             .into_iter()
             .map(|(coeff, map)| (coeff * rhs.coeff, map))
             .collect();
+
         Self {
             sum: sum_0.into_iter().chain(sum_1).collect(),
             coeff: fr!(1),
@@ -145,7 +153,7 @@ impl Add for EqMLE {
 }
 
 // EqMLE * Fr
-impl Mul<Fr> for EqMLE {
+impl Mul<Fr> for MLE {
     type Output = Self;
 
     fn mul(mut self, scalar: Fr) -> Self::Output {
@@ -155,10 +163,10 @@ impl Mul<Fr> for EqMLE {
 }
 
 // Fr * EqMLE
-impl Mul<EqMLE> for Fr {
-    type Output = EqMLE;
+impl Mul<MLE> for Fr {
+    type Output = MLE;
 
-    fn mul(self, mut rhs: EqMLE) -> Self::Output {
+    fn mul(self, mut rhs: MLE) -> Self::Output {
         rhs.coeff *= self;
         rhs
     }
@@ -220,4 +228,135 @@ mod tests {
         assert!(!satisfy_poly(fr!(6), &coeffs));
         assert!(!satisfy_poly(fr!(7), &coeffs));
     }
+
+    #[test]
+    fn check_mle() {
+        let _ = fr!(5) * MLE::eq("x", &vec![true, true]) * MLE::eq("x", &vec![true, false]);
+
+        let f_mle = fr!(22) * MLE::eq("x", &vec![true, true])
+            + fr!(33) * MLE::eq("x", &vec![true, false])
+            + fr!(44) * MLE::eq("x", &vec![false, true])
+            + fr!(55) * MLE::eq("x", &vec![false, false]);
+    
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(22)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![true, false])
+                .fin()
+                .unwrap(),
+            fr!(33)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![false, true])
+                .fin()
+                .unwrap(),
+            fr!(44)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .fin()
+                .unwrap(),
+            fr!(55)
+        );
+    
+        let f_mle = MLE::eq("x", &vec![true, true]) * MLE::eq("y", &vec![true, true]);
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![true, true])
+                .evaluate("y", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(1)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("y", &vec![true, true])
+                .evaluate("x", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(1)
+        );
+    
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![false, true])
+                .evaluate("y", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(0)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![true, false])
+                .evaluate("y", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(0)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .evaluate("y", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(0)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![false, true])
+                .evaluate("y", &vec![false, true])
+                .fin()
+                .unwrap(),
+            fr!(0)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![true, false])
+                .evaluate("y", &vec![true, false])
+                .fin()
+                .unwrap(),
+            fr!(0)
+        );
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .evaluate("y", &vec![false, false])
+                .fin()
+                .unwrap(),
+            fr!(0)
+        );
+    
+        let f_mle = MLE::eq("x", &vec![true, true]) + MLE::eq("y", &vec![true, true]);
+        assert_eq!(
+            f_mle
+                .clone()
+                .evaluate("x", &vec![true, true])
+                .evaluate("y", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(2)
+        );
+    }
 }
+
+
