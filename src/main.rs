@@ -46,8 +46,16 @@ fn main() {
     let sum_m2z1 = sum_all_patterns!(n, "y", m2z1);
     let sum_m3z1 = sum_all_patterns!(n, "y", m3z1);
     let g = sum_m1z1.clone() * sum_m2z1.clone() + fr!(-1) * sum_m3z1.clone();
-    let sum_g = sum_all_patterns!(m, "x", g);
-    println!("sum_g: {:?}", sum_g.fin().unwrap())
+    let h = all_bit_patterns(m)
+        .into_iter()
+        .map(|pattern| g.clone().evaluate("x", &pattern) * MLE::eq("x", &pattern))
+        .reduce(|acc, x| acc + x)
+        .unwrap();
+
+    let beta= bvec![0,1]; // 本来はランダム
+    let q = g * MLE::eq("x", &beta);
+
+    println!("h: {:?}", h.evaluate("x", &bvec![0,1]).fin().unwrap());
 }
 
 type ProdTerms = (Fr, Vec<bool>);
