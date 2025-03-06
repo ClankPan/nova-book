@@ -9,9 +9,35 @@ use std::{
 };
 
 fn main() {
-    MLE::eq("x",&bvec![0,1,1]);
-    vector_mle(&frvec![0,1,1]);
-    matrix_mle(&frmatrix!([0,1,1], [0,0,0]));
+    // MLE::eq("x",&bvec![0,1,1]);
+    // vector_mle(&frvec![0,1,1]);
+    let m1_mle = matrix_mle(&frmatrix!(
+        [1,1,0,0,0,0,0,0],
+        [0,0,0,0,1,0,0,0],
+        [0,0,1,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0]
+    ));
+    let m2_mle = matrix_mle(&frmatrix!(
+        [0,0,0,0,0,0,0,1],
+        [0,0,0,1,0,0,0,0],
+        [0,0,0,0,0,1,0,0],
+        [0,0,0,0,0,0,0,0]
+    ));
+    let m3_mle = matrix_mle(&frmatrix!(
+        [0,0,1,0,0,0,0,0],
+        [0,0,0,0,0,1,0,0],
+        [0,0,0,0,0,0,1,0],
+        [0,0,0,0,0,0,0,0]
+    ));
+
+    // let x = vec![0,1,1,2,3,6,6];
+    // let w = vec![];
+    let z1 = vector_mle(&frvec![0,1,1,2,3,6,6, 1]);
+
+    let m = 4;
+    let n = 8;
+
+    let g = sum_all_patterns!(n, "y", m1_mle) * sum_all_patterns!(n, "y", m2_mle) + fr!(-1) * sum_all_patterns!(n, "y", m3_mle);
 }
 
 type ProdTerms = (Fr, Vec<bool>);
@@ -273,16 +299,7 @@ macro_rules! frvec {
             let mut temp = Vec::new();
             $(
                 let num = $val;
-                // 0か1以外ならアサート失敗
-                assert!(
-                    num == 0 || num == 1,
-                    "boolvec!: invalid value `{}`, allowed only 0 or 1", num
-                );
-                if num == 1 {
-                    temp.push(Fr::ONE);
-                } else {
-                    temp.push(Fr::ZERO);
-                }
+                temp.push(Fr::from(num));
             )*
             temp
         }
@@ -310,13 +327,7 @@ macro_rules! bmatrix {
             // 各要素に対してチェック
             $(
                 let num = $val;
-                // 0か1以外ならアサート失敗
-                assert!(
-                    num == 0 || num == 1,
-                    "bmat!: invalid value `{}`, allowed only 0 or 1", 
-                    num
-                );
-                row_vec.push(num == 1);
+                row_vec.push(Fr::from(num));
                 col_count += 1;
             )*
 
@@ -409,6 +420,22 @@ macro_rules! frmatrix {
         outer // => Vec<Vec<ark_test_curves::bls12_381::Fr>>
     }};
 }
+
+#[macro_export]
+macro_rules! sum_all_patterns {
+    // 第1引数: n (usize など), 
+    // 第2引数: 変数名 (例: "y"), 
+    // 第3引数: m1_mle
+    ($n:expr, $var:expr, $mle:expr) => {{
+        // all_bit_patterns($n) は事前に定義されていると仮定
+        all_bit_patterns($n)
+            .into_iter()
+            .map(|pattern| $mle.clone().evaluate($var, &pattern))
+            .reduce(|acc, x| acc + x)
+            .unwrap()
+    }};
+}
+
 
 
 
