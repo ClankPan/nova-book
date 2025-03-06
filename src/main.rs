@@ -11,28 +11,43 @@ fn main() {
         + fr!(44) * EqMLE::new("x", &vec![false, true])
         + fr!(55) * EqMLE::new("x", &vec![false, false]);
 
-    assert_eq!(f_mle.clone().evaluate(&vec![true, true]), fr!(22));
-    assert_eq!(f_mle.clone().evaluate(&vec![true, false]), fr!(33));
-    assert_eq!(f_mle.clone().evaluate(&vec![false, true]), fr!(44));
-    assert_eq!(f_mle.clone().evaluate(&vec![false, false]), fr!(55));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![true, true]), fr!(22));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![true, false]), fr!(33));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![false, true]), fr!(44));
+    assert_eq!(f_mle.clone().evaluate("x", &vec![false, false]), fr!(55));
 }
+
+/*
+
+Π(x_i - 1) * Π(y_i - 1)
+*/
+
+type XProdTerms = (Fr, Vec<bool>);
+type YProdTerms = (Fr, Vec<bool>);
+#[derive(Clone)]
+pub struct _EqMLE {
+    sum: Vec<(XProdTerms, YProdTerms)>,
+    coeff: Fr,
+}
+
 
 #[derive(Clone)]
 pub struct EqMLE {
-    // name: String,
+    name: String,
     sum: Vec<(Fr, Vec<bool>)>,
     coeff: Fr,
 }
 
 impl EqMLE {
-    pub fn new(_name: &str, booleans: &[bool]) -> Self {
+    pub fn new(name: &str, booleans: &[bool]) -> Self {
         Self {
-            // name: name.to_string(),
+            name: name.to_string(),
             sum: vec![(fr!(1), booleans.to_vec())],
             coeff: fr!(1),
         }
     }
-    pub fn evaluate(self, x: &[bool]) -> Fr {
+    pub fn evaluate(self, name: &str, x: &[bool]) -> Fr {
+        assert_eq!(self.name, name);
         let mut sum = fr!(0);
         for (coeff, prod_terms) in self.sum {
             assert_eq!(x.len(), prod_terms.len());
@@ -70,6 +85,7 @@ impl Mul for EqMLE {
         EqMLE {
             sum,
             coeff: self.coeff * rhs.coeff,
+            name: self.name //todo
         }
     }
 }
@@ -91,6 +107,7 @@ impl Add for EqMLE {
         Self {
             sum: sum_0.into_iter().chain(sum_1).collect(),
             coeff: fr!(1),
+            name: self.name //todo
         }
     }
 }
