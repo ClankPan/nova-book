@@ -1,22 +1,23 @@
 use ark_ff::{AdditiveGroup, Field};
 use ark_test_curves::bls12_381::Fr;
 
-use std::{num::NonZero, ops::Add, ops::Mul};
+use std::{ops::Add, ops::Mul};
 
 fn main() {
-    let aa = fr!(5) * EqMLE::new("x", &vec![true, true]) * EqMLE::new("x", &vec![true, false]);
+    let _ = fr!(5) * EqMLE::new("x", &vec![true, true]) * EqMLE::new("x", &vec![true, false]);
 
-    let aaa = fr!(2) * EqMLE::new("x", &vec![true, true])
-        + fr!(3) * EqMLE::new("x", &vec![true, false])
-        + fr!(4) * EqMLE::new("x", &vec![false, true])
-        + fr!(5) * EqMLE::new("x", &vec![false, false]);
+    let f_mle = fr!(22) * EqMLE::new("x", &vec![true, true])
+        + fr!(33) * EqMLE::new("x", &vec![true, false])
+        + fr!(44) * EqMLE::new("x", &vec![false, true])
+        + fr!(55) * EqMLE::new("x", &vec![false, false]);
+
+    assert_eq!(f_mle.clone().evaluate(&vec![true, true]), fr!(22));
+    assert_eq!(f_mle.clone().evaluate(&vec![true, false]), fr!(33));
+    assert_eq!(f_mle.clone().evaluate(&vec![false, true]), fr!(44));
+    assert_eq!(f_mle.clone().evaluate(&vec![false, false]), fr!(55));
 }
 
-pub enum EqTerm {
-    Zero,
-    Bool(bool),
-}
-
+#[derive(Clone)]
 pub struct EqMLE {
     // name: String,
     sum: Vec<(Fr, Vec<bool>)>,
@@ -31,6 +32,17 @@ impl EqMLE {
             coeff: fr!(1),
         }
     }
+    pub fn evaluate(self, x: &[bool]) -> Fr {
+        let mut sum = fr!(0);
+        for (coeff, prod_terms) in self.sum {
+            assert_eq!(x.len(), prod_terms.len());
+            // 一つでも異なる組があればこのproductは0になる。
+            if x.iter().zip(prod_terms.iter()).all(|(x_i, t_i)| x_i == t_i) {
+                sum += coeff
+            }
+        }
+        self.coeff * sum
+    }
 }
 
 // EqMLE * EqMLE
@@ -42,6 +54,7 @@ impl Mul for EqMLE {
 
         for (coeff_0, eq_prod_0) in self.sum {
             'outer: for (coeff_1, eq_prod_1) in &rhs.sum {
+                assert_eq!(eq_prod_0.len(), eq_prod_1.len());
                 let mut terms = vec![];
                 for (b, _b) in eq_prod_0.iter().zip(eq_prod_1) {
                     if b == _b {
@@ -102,7 +115,7 @@ impl Mul<EqMLE> for Fr {
     }
 }
 
-fn all_bit_patterns(n: usize) -> Vec<Vec<Fr>> {
+fn _all_bit_patterns(n: usize) -> Vec<Vec<Fr>> {
     let total = 1 << n; // 2^n
     let mut result = Vec::with_capacity(total);
 
