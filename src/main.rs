@@ -36,26 +36,10 @@ fn main() {
     // let x = vec![0,1,1,2,3,6,6];
     // let w = vec![];
     let z1_mle = vector_mle("y", &frvec![0, 1, 1, 2, 3, 6, 6, 1]);
-    
-    let m1z1 = m1_mle.clone() * z1_mle.clone();
-    let m2z1 = m2_mle.clone() * z1_mle.clone();
-    let m3z1 = m3_mle.clone() * z1_mle.clone();
 
-    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![0,0]).fin().unwrap());
-    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![0,0]).fin().unwrap());
-    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![0,0]).fin().unwrap());
-    println!("\n");
-    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![0,1]).fin().unwrap());
-    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![0,1]).fin().unwrap());
-    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![0,1]).fin().unwrap());
-    println!("\n");
-    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![1,0]).fin().unwrap());
-    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![1,0]).fin().unwrap());
-    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![1,0]).fin().unwrap());
-    println!("\n");
-    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![1,1]).fin().unwrap());
-    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![1,1]).fin().unwrap());
-    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![1,1]).fin().unwrap());
+    let m1z1 = m1_mle * z1_mle.clone();
+    let m2z1 = m2_mle * z1_mle.clone();
+    let m3z1 = m3_mle * z1_mle.clone();
 
     println!("\n");
     let sum_m1z1 = sum_all_patterns!(n, "y", m1z1);
@@ -64,7 +48,6 @@ fn main() {
     let g = sum_m1z1.clone() * sum_m2z1.clone() + fr!(-1) * sum_m3z1.clone();
     let sum_g = sum_all_patterns!(m, "x", g);
     println!("sum_g: {:?}", sum_g.fin().unwrap())
-
 }
 
 type ProdTerms = (Fr, Vec<bool>);
@@ -81,7 +64,7 @@ pub fn vector_mle(variable: &str, vector: &[Fr]) -> MLE {
         .enumerate()
         .filter_map(|(i, pattern)| {
             if vector[i] == Fr::ZERO {
-                return None
+                return None;
             }
             Some(vector[i] * MLE::eq(variable, &pattern))
         })
@@ -103,7 +86,7 @@ pub fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> MLE {
                 .enumerate()
                 .filter_map(|(j, y_pattern)| {
                     if matrix[i][j] == Fr::ZERO {
-                        return None
+                        return None;
                     }
                     Some(matrix[i][j] * MLE::eq("x", &x_pattern) * MLE::eq("y", &y_pattern))
                 })
@@ -184,11 +167,13 @@ impl Mul for MLE {
                 // 同じsum_termにある全ての変数に対して。
                 // let variables: Vec<String> = map_0.keys().cloned().into_iter().chain(map_1.keys().cloned().into_iter()).collect::<Vec<_>>().into_iter().sorted().collect();
                 // println!("variables: {:?}", variables);
-                let variables: Vec<String> = map_0.keys().cloned()
+                let variables: Vec<String> = map_0
+                    .keys()
+                    .cloned()
                     .chain(map_1.keys().cloned())
-                    .sorted() 
-                    .dedup() 
-                    .collect(); 
+                    .sorted()
+                    .dedup()
+                    .collect();
                 for variable in variables {
                     // println!("key: {}", variable);
                     match (map_0.get(&variable), map_1.get(&variable)) {
