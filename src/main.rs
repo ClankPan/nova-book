@@ -12,47 +12,79 @@ fn main() {
     // MLE::eq("x",&bvec![0,1,1]);
     // vector_mle(&frvec![0,1,1]);
     let m1_mle = matrix_mle(&frmatrix!(
-        [1,1,0,0,0,0,0,0],
-        [0,0,0,0,1,0,0,0],
-        [0,0,1,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0]
+        [1, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
     ));
     let m2_mle = matrix_mle(&frmatrix!(
-        [0,0,0,0,0,0,0,1],
-        [0,0,0,1,0,0,0,0],
-        [0,0,0,0,0,1,0,0],
-        [0,0,0,0,0,0,0,0]
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
     ));
     let m3_mle = matrix_mle(&frmatrix!(
-        [0,0,1,0,0,0,0,0],
-        [0,0,0,0,0,1,0,0],
-        [0,0,0,0,0,0,1,0],
-        [0,0,0,0,0,0,0,0]
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
     ));
-
-    // let x = vec![0,1,1,2,3,6,6];
-    // let w = vec![];
-    let z1 = vector_mle(&frvec![0,1,1,2,3,6,6, 1]);
 
     let m = 4;
     let n = 8;
 
-    let g = sum_all_patterns!(n, "y", m1_mle) * sum_all_patterns!(n, "y", m2_mle) + fr!(-1) * sum_all_patterns!(n, "y", m3_mle);
+    // let x = vec![0,1,1,2,3,6,6];
+    // let w = vec![];
+    let z1_mle = vector_mle("y", &frvec![0, 1, 1, 2, 3, 6, 6, 1]);
+    
+    let m1z1 = m1_mle.clone() * z1_mle.clone();
+    let m2z1 = m2_mle.clone() * z1_mle.clone();
+    let m3z1 = m3_mle.clone() * z1_mle.clone();
+
+    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![0,0]).fin().unwrap());
+    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![0,0]).fin().unwrap());
+    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![0,0]).fin().unwrap());
+    println!("\n");
+    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![0,1]).fin().unwrap());
+    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![0,1]).fin().unwrap());
+    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![0,1]).fin().unwrap());
+    println!("\n");
+    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![1,0]).fin().unwrap());
+    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![1,0]).fin().unwrap());
+    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![1,0]).fin().unwrap());
+    println!("\n");
+    println!("sum_m1z1: {:?}", sum_all_patterns!(n, "y", m1z1).evaluate("x", &bvec![1,1]).fin().unwrap());
+    println!("sum_m2z1: {:?}", sum_all_patterns!(n, "y", m2z1).evaluate("x", &bvec![1,1]).fin().unwrap());
+    println!("sum_m3z1: {:?}", sum_all_patterns!(n, "y", m3z1).evaluate("x", &bvec![1,1]).fin().unwrap());
+
+    println!("\n");
+    let sum_m1z1 = sum_all_patterns!(n, "y", m1z1);
+    let sum_m2z1 = sum_all_patterns!(n, "y", m2z1);
+    let sum_m3z1 = sum_all_patterns!(n, "y", m3z1);
+    let g = sum_m1z1.clone() * sum_m2z1.clone() + fr!(-1) * sum_m3z1.clone();
+    let sum_g = sum_all_patterns!(m, "x", g);
+    println!("sum_g: {:?}", sum_g.fin().unwrap())
+
 }
 
 type ProdTerms = (Fr, Vec<bool>);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MLE {
     sum: Vec<(Fr, HashMap<String, ProdTerms>)>,
     coeff: Fr,
 }
 
-pub fn vector_mle(vector: &[Fr]) -> MLE {
+pub fn vector_mle(variable: &str, vector: &[Fr]) -> MLE {
     // todo check vector len is pow of 2
     all_bit_patterns(vector.len())
         .into_iter()
         .enumerate()
-        .map(|(i, pattern)| vector[i] * MLE::eq("x", &pattern))
+        .filter_map(|(i, pattern)| {
+            if vector[i] == Fr::ZERO {
+                return None
+            }
+            Some(vector[i] * MLE::eq(variable, &pattern))
+        })
         .reduce(|acc, x| acc + x)
         .unwrap()
 }
@@ -64,16 +96,18 @@ pub fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> MLE {
     all_bit_patterns(m)
         .into_iter()
         .enumerate()
-        .map(|(i, x_pattern)| {
+        .filter_map(|(i, x_pattern)| {
             assert!(matrix[i].len() == n);
             all_bit_patterns(n)
                 .into_iter()
                 .enumerate()
-                .map(|(j, y_pattern)| {
-                    matrix[i][j] * MLE::eq("x", &x_pattern) * MLE::eq("y", &y_pattern)
+                .filter_map(|(j, y_pattern)| {
+                    if matrix[i][j] == Fr::ZERO {
+                        return None
+                    }
+                    Some(matrix[i][j] * MLE::eq("x", &x_pattern) * MLE::eq("y", &y_pattern))
                 })
                 .reduce(|acc, x| acc + x)
-                .unwrap()
         })
         .reduce(|acc, x| acc + x)
         .unwrap()
@@ -148,8 +182,16 @@ impl Mul for MLE {
                 let mut new_map = HashMap::new();
 
                 // 同じsum_termにある全ての変数に対して。
-                for variable in map_0.keys().chain(map_1.keys()).sorted().dedup() {
-                    match (map_0.get(variable), map_1.get(variable)) {
+                // let variables: Vec<String> = map_0.keys().cloned().into_iter().chain(map_1.keys().cloned().into_iter()).collect::<Vec<_>>().into_iter().sorted().collect();
+                // println!("variables: {:?}", variables);
+                let variables: Vec<String> = map_0.keys().cloned()
+                    .chain(map_1.keys().cloned())
+                    .sorted() 
+                    .dedup() 
+                    .collect(); 
+                for variable in variables {
+                    // println!("key: {}", variable);
+                    match (map_0.get(&variable), map_1.get(&variable)) {
                         (None, None) => panic!(),
                         (None, Some(v)) => {
                             new_map.insert(variable.to_string(), v.clone());
@@ -158,18 +200,23 @@ impl Mul for MLE {
                             new_map.insert(variable.to_string(), v.clone());
                         }
                         (Some(v0), Some(v1)) => {
+                            // println!("key: {}", variable);
                             let (coeff_v0, prod_terms_v0) = v0;
                             let (coeff_v1, prod_terms_v1) = v1;
+                            // println!("prod_terms_v0, prod_terms_v0: {:?}, {:?}", prod_terms_v0,prod_terms_v1);
                             // 掛け合わせたprod_termが0にならないかを調べる。
                             let mut new_prod_terms = vec![];
                             for (b, _b) in prod_terms_v0.iter().zip(prod_terms_v1) {
                                 if b == _b {
+                                    // println!("push");
                                     new_prod_terms.push(*b);
                                 } else {
+                                    // println!("break");
                                     // もし、評価した結果が0になるのなら、このsum_termは0になるので、次に移動する。
-                                    break 'outer;
+                                    continue 'outer;
                                 }
                             }
+                            // println!("all same");
                             new_map.insert(
                                 variable.to_string(),
                                 (coeff_v0 * coeff_v1, new_prod_terms),
@@ -308,7 +355,7 @@ macro_rules! frvec {
 
 #[macro_export]
 macro_rules! bmatrix {
-    // 
+    //
     // 複数の [ ... ] (それぞれ1行) を並べる形
     (
         $(
@@ -316,7 +363,7 @@ macro_rules! bmatrix {
         ),* $(,)?
     ) => {{
         let mut outer = Vec::new();
-        
+
         // まだ列数が確定していないので Option<usize> を使う
         let mut expected_cols: Option<usize> = None;
 
@@ -364,7 +411,7 @@ macro_rules! frmatrix {
         let mut outer = Vec::new();
         // 列数がまだ未定 → Option
         let mut expected_cols: Option<usize> = None;
-        
+
         // 行ループ用カウンタ（メッセージ表示に使う）
         let mut row_idx = 0_usize;
 
@@ -423,21 +470,18 @@ macro_rules! frmatrix {
 
 #[macro_export]
 macro_rules! sum_all_patterns {
-    // 第1引数: n (usize など), 
-    // 第2引数: 変数名 (例: "y"), 
+    // 第1引数: n (usize など),
+    // 第2引数: 変数名 (例: "y"),
     // 第3引数: m1_mle
-    ($n:expr, $var:expr, $mle:expr) => {{
+    ($n:expr, $var:expr, $m:expr) => {{
         // all_bit_patterns($n) は事前に定義されていると仮定
         all_bit_patterns($n)
             .into_iter()
-            .map(|pattern| $mle.clone().evaluate($var, &pattern))
+            .map(|pattern| $m.clone().evaluate($var, &pattern))
             .reduce(|acc, x| acc + x)
             .unwrap()
     }};
 }
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -573,37 +617,21 @@ mod tests {
 
     #[test]
     fn check_vector_matrix_mle() {
-        let z_mle = vector_mle(&[fr!(11), fr!(22), fr!(33), fr!(44)]);
+        let z_mle = vector_mle("x", &[fr!(11), fr!(22), fr!(33), fr!(44)]);
         assert_eq!(
-            z_mle
-                .clone()
-                .evaluate("x", &[false, false])
-                .fin()
-                .unwrap(),
+            z_mle.clone().evaluate("x", &[false, false]).fin().unwrap(),
             fr!(11)
         );
         assert_eq!(
-            z_mle
-                .clone()
-                .evaluate("x", &[false, true])
-                .fin()
-                .unwrap(),
+            z_mle.clone().evaluate("x", &[false, true]).fin().unwrap(),
             fr!(22)
         );
         assert_eq!(
-            z_mle
-                .clone()
-                .evaluate("x", &[true, false])
-                .fin()
-                .unwrap(),
+            z_mle.clone().evaluate("x", &[true, false]).fin().unwrap(),
             fr!(33)
         );
         assert_eq!(
-            z_mle
-                .clone()
-                .evaluate("x", &[true, true])
-                .fin()
-                .unwrap(),
+            z_mle.clone().evaluate("x", &[true, true]).fin().unwrap(),
             fr!(44)
         );
 
