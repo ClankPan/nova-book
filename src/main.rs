@@ -5,11 +5,10 @@ use itertools::Itertools;
 use std::{
     collections::HashMap,
     ops::{Add, Mul},
+    vec,
 };
 
-fn main() {
- 
-}
+fn main() {}
 
 type ProdTerms = (Fr, Vec<bool>);
 #[derive(Clone)]
@@ -18,13 +17,42 @@ pub struct MLE {
     coeff: Fr,
 }
 
+pub fn vector_mle(vector: &[Fr]) -> MLE {
+    // todo check vector len is pow of 2
+    all_bit_patterns(vector.len())
+        .into_iter()
+        .enumerate()
+        .map(|(i, pattern)| vector[i] * MLE::eq("x", &pattern))
+        .reduce(|acc, x| acc + x)
+        .unwrap()
+}
+
+pub fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> MLE {
+    let m = matrix.len();
+    let n = matrix[0].len();
+    // todo check m,n len are pow of 2
+    all_bit_patterns(m)
+        .into_iter()
+        .enumerate()
+        .map(|(i, x_pattern)| {
+            assert!(matrix[i].len() == n);
+            all_bit_patterns(n)
+                .into_iter()
+                .enumerate()
+                .map(|(j, y_pattern)| {
+                    matrix[i][j] * MLE::eq("x", &x_pattern) * MLE::eq("y", &y_pattern)
+                })
+                .reduce(|acc, x| acc + x)
+                .unwrap()
+        })
+        .reduce(|acc, x| acc + x)
+        .unwrap()
+}
+
 impl MLE {
     pub fn eq(variable: &str, booleans: &[bool]) -> Self {
         let mut map = HashMap::new();
-        map.insert(
-            variable.to_string(),
-            (fr!(1), booleans.to_vec()),
-        );
+        map.insert(variable.to_string(), (fr!(1), booleans.to_vec()));
         Self {
             sum: vec![(fr!(1), map)],
             coeff: fr!(1),
@@ -33,13 +61,15 @@ impl MLE {
     pub fn evaluate(self, variable: &str, v: &[bool]) -> Self {
         let mut sum = vec![];
 
-        for sum_term in self.sum {
+        // println!("self.sum: {:?}", self.sum);
 
+        for sum_term in self.sum {
             let (coeff, mut map) = sum_term;
 
             match map.remove(variable) {
                 Some((v_coeff, v_prod_terms)) => {
                     // 全て一致していれば、このsum_termは0にはならないので、sumに再び加える。
+                    assert!(v.len() == v_prod_terms.len());
                     if v.iter()
                         .zip(v_prod_terms.iter())
                         .all(|(v_i, t_i)| v_i == t_i)
@@ -172,23 +202,24 @@ impl Mul<MLE> for Fr {
     }
 }
 
-fn _all_bit_patterns(n: usize) -> Vec<Vec<Fr>> {
-    let total = 1 << n; // 2^n
-    let mut result = Vec::with_capacity(total);
+fn all_bit_patterns(n: usize) -> Vec<Vec<bool>> {
+    let b_len = n.trailing_zeros() as usize;
+    // println!("bits: {b_len}");
+    let mut result = Vec::with_capacity(b_len);
 
-    for i in 0..total {
+    for i in 0..n {
         let mut bits = Vec::with_capacity(n);
-        for b in 0..n {
-            // b番目のビットが1なら Fr::ONE, 0なら Fr::ZERO
+        for b in (0..b_len).rev() {
+            // b番目のビットが1なら true, 0なら false
             if (i >> b) & 1 == 1 {
-                bits.push(Fr::ONE);
+                bits.push(true);
             } else {
-                bits.push(Fr::ZERO);
+                bits.push(false);
             }
         }
         result.push(bits);
     }
-
+    // println!("all_bit_patterns {:?}", result);
     result
 }
 
@@ -237,40 +268,24 @@ mod tests {
             + fr!(33) * MLE::eq("x", &[true, false])
             + fr!(44) * MLE::eq("x", &[false, true])
             + fr!(55) * MLE::eq("x", &[false, false]);
-    
+
         assert_eq!(
-            f_mle
-                .clone()
-                .evaluate("x", &[true, true])
-                .fin()
-                .unwrap(),
+            f_mle.clone().evaluate("x", &[true, true]).fin().unwrap(),
             fr!(22)
         );
         assert_eq!(
-            f_mle
-                .clone()
-                .evaluate("x", &[true, false])
-                .fin()
-                .unwrap(),
+            f_mle.clone().evaluate("x", &[true, false]).fin().unwrap(),
             fr!(33)
         );
         assert_eq!(
-            f_mle
-                .clone()
-                .evaluate("x", &[false, true])
-                .fin()
-                .unwrap(),
+            f_mle.clone().evaluate("x", &[false, true]).fin().unwrap(),
             fr!(44)
         );
         assert_eq!(
-            f_mle
-                .clone()
-                .evaluate("x", &[false, false])
-                .fin()
-                .unwrap(),
+            f_mle.clone().evaluate("x", &[false, false]).fin().unwrap(),
             fr!(55)
         );
-    
+
         let f_mle = MLE::eq("x", &[true, true]) * MLE::eq("y", &[true, true]);
         assert_eq!(
             f_mle
@@ -290,7 +305,7 @@ mod tests {
                 .unwrap(),
             fr!(1)
         );
-    
+
         assert_eq!(
             f_mle
                 .clone()
@@ -345,7 +360,7 @@ mod tests {
                 .unwrap(),
             fr!(0)
         );
-    
+
         let f_mle = MLE::eq("x", &[true, true]) + MLE::eq("y", &[true, true]);
         assert_eq!(
             f_mle
@@ -357,6 +372,103 @@ mod tests {
             fr!(2)
         );
     }
+
+    #[test]
+    fn check_vector_matrix_mle() {
+        let z_mle = vector_mle(&vec![fr!(11), fr!(22), fr!(33), fr!(44)]);
+        assert_eq!(
+            z_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .fin()
+                .unwrap(),
+            fr!(11)
+        );
+        assert_eq!(
+            z_mle
+                .clone()
+                .evaluate("x", &vec![false, true])
+                .fin()
+                .unwrap(),
+            fr!(22)
+        );
+        assert_eq!(
+            z_mle
+                .clone()
+                .evaluate("x", &vec![true, false])
+                .fin()
+                .unwrap(),
+            fr!(33)
+        );
+        assert_eq!(
+            z_mle
+                .clone()
+                .evaluate("x", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(44)
+        );
+
+        let matrix = vec![
+            vec![fr!(11), fr!(21), fr!(31), fr!(41)],
+            vec![fr!(12), fr!(22), fr!(32), fr!(42)],
+            vec![fr!(13), fr!(23), fr!(33), fr!(43)],
+            vec![fr!(14), fr!(24), fr!(34), fr!(44)],
+        ];
+        let m_mle = matrix_mle(&matrix);
+        assert_eq!(
+            m_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .evaluate("y", &vec![false, false])
+                .fin()
+                .unwrap(),
+            fr!(11)
+        );
+        assert_eq!(
+            m_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .evaluate("y", &vec![false, true])
+                .fin()
+                .unwrap(),
+            fr!(21)
+        );
+        assert_eq!(
+            m_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .evaluate("y", &vec![true, false])
+                .fin()
+                .unwrap(),
+            fr!(31)
+        );
+        assert_eq!(
+            m_mle
+                .clone()
+                .evaluate("x", &vec![false, false])
+                .evaluate("y", &vec![true, true])
+                .fin()
+                .unwrap(),
+            fr!(41)
+        );
+        assert_eq!(
+            m_mle
+                .clone()
+                .evaluate("x", &vec![false, true])
+                .evaluate("y", &vec![false, false])
+                .fin()
+                .unwrap(),
+            fr!(12)
+        );
+        assert_eq!(
+            m_mle
+                .clone()
+                .evaluate("x", &vec![false, true])
+                .evaluate("y", &vec![false, true])
+                .fin()
+                .unwrap(),
+            fr!(22)
+        );
+    }
 }
-
-
