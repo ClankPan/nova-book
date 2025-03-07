@@ -44,7 +44,7 @@ fn vector_mle(vector: &[Fr], var: Var) -> Poly {
         if vector[i] == Fr::ZERO {
             continue;
         }
-        mle += vector[i] * eq(&pattern);
+        mle += vector[i] * eq(&bit_patterns_to_fr(&pattern));
     }
 
     mle
@@ -61,7 +61,7 @@ fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
             if matrix[i][j] == Fr::ZERO {
                 continue;
             }
-            mle += matrix[i][j] * Eq::x(&x_pattern) * Eq::y(&y_pattern);
+            mle += matrix[i][j] * Eq::x(&bit_patterns_to_fr(&x_pattern)) * Eq::y(&bit_patterns_to_fr(&y_pattern));
         }
     }
 
@@ -75,7 +75,11 @@ impl Default for Poly {
 }
 
 pub fn bit_patterns_to_variables(pattern: &Vec<bool>) -> Vec<Option<Fr>> {
-    pattern.into_iter().map(|b| Some(Fr::from(*b))).collect()
+    pattern.iter().map(|b| Some(Fr::from(*b))).collect()
+}
+
+pub fn bit_patterns_to_fr(pattern: &Vec<bool>) -> Vec<Fr> {
+    pattern.iter().map(|b| Fr::from(*b)).collect()
 }
 
 impl Poly {
@@ -263,27 +267,27 @@ impl AddAssign for Poly {
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Eq {
-    inner: (Option<Vec<bool>>, Option<Vec<bool>>),
+    inner: (Option<Vec<Fr>>, Option<Vec<Fr>>),
 }
 
 impl Eq {
-    pub fn x(inner: &[bool]) -> Self {
+    pub fn x(inner: &[Fr]) -> Self {
         Self {
             inner: (Some(inner.to_vec()), None),
         }
     }
-    pub fn y(inner: &[bool]) -> Self {
+    pub fn y(inner: &[Fr]) -> Self {
         Self {
             inner: (None, Some(inner.to_vec())),
         }
     }
 }
 
-fn same_bits(a: &[bool], b: &[bool]) -> bool {
+fn same_bits(a: &[Fr], b: &[Fr]) -> bool {
     a.iter().zip(b).all(|(a_i, b_i)| a_i == b_i)
 }
 
-fn get_new_inner_term(a: Vec<bool>, b: Vec<bool>) -> Result<Vec<bool>, ()> {
+fn get_new_inner_term(a: Vec<Fr>, b: Vec<Fr>) -> Result<Vec<Fr>, ()> {
     assert_eq!(a.len(), b.len());
     if same_bits(&a, &b) {
         Ok(a)
@@ -537,10 +541,48 @@ pub mod tests {
         let mut h = Poly::new();
         for pattern in all_bit_patterns(m) {
             let variables = bit_patterns_to_variables(&pattern);
-            h += g.clone().eval_x(&variables) * Eq::x(&pattern)
+            h += g.clone().eval_x(&variables) * Eq::x(&bit_patterns_to_fr(&pattern))
         }
 
         let sum_h = h.sum(m, &Var::X).fin();
         assert_eq!(sum_h, Fr::ZERO);
+    }
+
+    #[test]
+    fn check_sumcheck() {
+
+        let m1_mle = MLE::matrix(&frmatrix!(
+            [1, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+        let m2_mle = MLE::matrix(&frmatrix!(
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+        let m3_mle = MLE::matrix(&frmatrix!(
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+
+        let m = 4;
+        let n = 8;
+
+        let z1_mle = MLE::vec_y(&frvec![0, 1, 1, 2, 3, 6, 6, 1]);
+
+        let m1z1 = m1_mle * z1_mle.clone();
+        let m2z1 = m2_mle * z1_mle.clone();
+        let m3z1 = m3_mle * z1_mle.clone();
+
+
+        let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
+
+        // let beta = fr
+        // let q = g * MLE::x()
     }
 }
