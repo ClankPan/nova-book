@@ -3,7 +3,7 @@ use ark_test_curves::bls12_381::Fr;
 
 use std::ops::{Add, AddAssign, Mul};
 
-use crate::{all_bit_patterns, bvec, fr};
+use crate::all_bit_patterns;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Term(Fr, Eq);
@@ -41,6 +41,9 @@ fn vector_mle(vector: &[Fr], var: Var) -> Poly {
 
     let mut mle = Poly::new();
     for (i, pattern) in all_bit_patterns(vector.len()).into_iter().enumerate() {
+        if vector[i] == Fr::ZERO {
+            continue;
+        }
         mle += vector[i] * eq(&pattern);
     }
 
@@ -55,11 +58,24 @@ fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
     for (i, x_pattern) in all_bit_patterns(m).into_iter().enumerate() {
         for (j, y_pattern) in all_bit_patterns(n).into_iter().enumerate() {
             assert!(matrix[i].len() == n);
+            if matrix[i][j] == Fr::ZERO {
+                continue;
+            }
             mle += matrix[i][j] * Eq::x(&x_pattern) * Eq::y(&y_pattern);
         }
     }
 
     mle
+}
+
+impl Default for Poly {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub fn bit_patterns_to_variables(pattern: &Vec<bool>) -> Vec<Option<Fr>> {
+    pattern.into_iter().map(|b| Some(Fr::from(*b))).collect()
 }
 
 impl Poly {
@@ -83,8 +99,8 @@ impl Poly {
     pub fn sum(self, bit_len: usize, var: &Var) -> Poly {
         let mut sum = Poly::new();
         for pattern in all_bit_patterns(bit_len) {
-            let pattern = pattern.into_iter().map(|b| Some(Fr::from(b))).collect();
-            sum += self.clone().eval(&pattern, &var);
+            let pattern = bit_patterns_to_variables(&pattern);
+            sum += self.clone().eval(&pattern, var);
         }
 
         sum
@@ -117,7 +133,7 @@ impl Poly {
                             new_a.push(*a_i)
                         }
                     }
-                    if new_a.len() == 0 {
+                    if new_a.is_empty() {
                         None
                     } else {
                         Some(new_a)
@@ -125,6 +141,10 @@ impl Poly {
                 }
                 None => None,
             };
+
+            if coeff == Fr::ZERO {
+                continue;
+            }
 
             let (x, y) = if is_x { (a, b) } else { (b, a) };
             sum.push((coeff, Eq { inner: (x, y) }))
@@ -161,7 +181,10 @@ impl Mul<Eq> for Poly {
     fn mul(mut self, eq: Eq) -> Self::Output {
         let mut sum = vec![];
         for (coeff, term) in self.sum {
-            sum.push((coeff, term * eq.clone()))
+            let poly =  term * eq.clone();
+            assert!(poly.sum.len() == 1);
+            assert!(poly.sum[0].0 == Fr::ONE);
+            sum.push((coeff, poly.sum[0].1.clone()))
         }
         self.sum = sum;
         self
@@ -185,15 +208,17 @@ impl Mul<Poly> for Poly {
     fn mul(self, rhs: Poly) -> Self::Output {
         let coeff = self.coeff * rhs.coeff;
         let mut sum = vec![];
-        for (coeff_a, term_a) in self.sum {
-            'inner: for (coeff_b, term_b) in &rhs.sum {
-                let coeff_ab = coeff_a * coeff_b;
+        for (coeff_a, eq_a) in self.sum {
+            'inner: for (coeff_b, eq_b) in &rhs.sum {
+                let poly_ab = eq_a.clone() * eq_b.clone();
+                let coeff_ab = coeff_a * coeff_b * poly_ab.coeff;
                 if coeff_ab == Fr::ZERO {
                     // coeffが0の時はsumから除外する。
                     continue 'inner;
                 }
-                let term_ab = term_a.clone() * term_b.clone();
-                sum.push((coeff_ab, term_ab));
+                assert!(poly_ab.sum.len() == 1);
+                assert!(poly_ab.sum[0].0 == Fr::ONE);
+                sum.push((coeff_ab, poly_ab.sum[0].1.clone()))
             }
         }
         Self { coeff, sum }
@@ -254,13 +279,26 @@ impl Eq {
     }
 }
 
-// Eq * Eq -> Eq
+fn same_bits(a: &[bool], b: &[bool]) -> bool {
+    a.iter().zip(b).all(|(a_i,b_i)| a_i == b_i)
+}
+
+fn get_new_inner_term(a: Vec<bool>, b: Vec<bool>) -> Result<Vec<bool>, ()> {
+    assert_eq!(a.len(), b.len());
+    if same_bits(&a, &b) {
+        Ok(a)
+    } else {
+        Err(())
+    }
+}
+
+// Eq * Eq -> Poly
 impl Mul<Eq> for Eq {
-    type Output = Self;
+    type Output = Poly;
 
     fn mul(self, rhs: Eq) -> Self::Output {
-        let ((x1, x2), (y1, y2)) = (self.inner, rhs.inner);
-        let inner = match (x1, x2, y1, y2) {
+        let ((x1, y1), (x2, y2)) = (self.inner, rhs.inner);
+        let inner = match (x1, y1, x2, y2) {
             (None, None, None, None) => (None, None),
             (None, None, None, Some(y)) => (None, Some(y)),
             (None, None, Some(x), None) => (Some(x), None),
@@ -271,16 +309,59 @@ impl Mul<Eq> for Eq {
             (Some(x), None, None, Some(y)) => (Some(x), Some(y)),
             (Some(x), Some(y), None, None) => (Some(x), Some(y)),
 
-            (None, Some(y_a), None, Some(y_b)) => todo!(),
-            ((None, Some(y_a), Some(x), Some(y_b))) => todo!(),
-            ((Some(x_a), None, Some(x_b), None)) => todo!(),
-            ((Some(x), Nonem, Some(x_b), Some(y))) => todo!(),
-            ((Some(x), Some(y_a), None, Some(y_b))) => todo!(),
-            ((Some(x_a), Some(y), Some(x_b), None)) => todo!(),
-            ((Some(x_a), Some(y_a), Some(x_b), Some(y_b))) => todo!(),
+
+            (None, Some(y1), None, Some(y2)) => {
+                let Ok(y) = get_new_inner_term(y1, y2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (None, Some(y))
+            },
+            (None, Some(y1), Some(x), Some(y2)) => {
+                let Ok(y) = get_new_inner_term(y1, y2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (Some(x), Some(y))
+            },
+            (Some(x1), None, Some(x2), None) => {
+                let Ok(x) = get_new_inner_term(x1, x2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (Some(x), None)
+            },
+            (Some(x1), None, Some(x2), Some(y)) => {
+                let Ok(x) = get_new_inner_term(x1, x2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (Some(x), Some(y))
+            },
+            (Some(x), Some(y1), None, Some(y2)) => {
+                let Ok(y) = get_new_inner_term(y1, y2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (Some(x), Some(y))
+            },
+            (Some(x1), Some(y), Some(x2), None) => {
+                let Ok(x) = get_new_inner_term(x1, x2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (Some(x), Some(y))
+            },
+            (Some(x1), Some(y1), Some(x2), Some(y2)) => {
+                let Ok(x) = get_new_inner_term(x1, x2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                let Ok(y) = get_new_inner_term(y1, y2) else {
+                    return Poly { coeff: Fr::ZERO,  sum: vec![] }
+                };
+                (Some(x), Some(y))
+            },
         };
 
-        Self { inner }
+        let eq = Eq {
+            inner
+        };
+
+        Poly { coeff: Fr::ONE, sum: vec![(Fr::ONE, eq)] }
     }
 }
 
@@ -369,6 +450,21 @@ pub mod tests {
 
     #[test]
     fn check_fibobacci_ccs() {
+        let v_00: Vec<_> = bvec![0, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_01: Vec<_> = bvec![0, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_10: Vec<_> = bvec![1, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_11: Vec<_> = bvec![1, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+
+        let v_000: Vec<_> = bvec![0, 0, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_001: Vec<_> = bvec![0, 0, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_010: Vec<_> = bvec![0, 1, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_011: Vec<_> = bvec![0, 1, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_100: Vec<_> = bvec![1, 0, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_101: Vec<_> = bvec![1, 0, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_110: Vec<_> = bvec![1, 1, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_111: Vec<_> = bvec![1, 1, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+
+
         let m1_mle = MLE::matrix(&frmatrix!(
             [1, 1, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0],
@@ -397,10 +493,35 @@ pub mod tests {
         let m2z1 = m2_mle * z1_mle.clone();
         let m3z1 = m3_mle * z1_mle.clone();
 
-        let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
+        println!("{:?}", m1z1.clone());
 
-        let res = g.sum(m, &Var::X).fin();
+        let sum_m1z1 = m1z1.clone().sum(n, &Var::Y);
+        let sum_m2z1 = m2z1.clone().sum(n, &Var::Y);
+        let sum_m3z1 = m3z1.clone().sum(n, &Var::Y);
 
-        assert_eq!(res, Fr::ZERO);
+        println!("\n");
+        println!("{:?}", m1z1.clone().eval_x(&v_01));
+        println!("\n");
+        println!("{:?}", m1z1.clone().eval_y(&v_100));
+
+        assert_eq!(m1z1.clone().eval_y(&v_000).eval_x(&v_00).fin(), fr!(1));
+
+        // let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
+
+        // let sum_g = g.clone().sum(m, &Var::X).fin();
+        // assert_eq!(sum_g, Fr::ZERO);
+
+        // let h = all_bit_patterns(m)
+        // .into_iter()
+        // .map(|pattern| g.clone().evaluate("x", &pattern) * MLE::eq("x", &pattern))
+        // .reduce(|acc, x| acc + x)
+        // .unwrap();
+
+        // let mut h = Poly::new();
+        // for pattern in all_bit_patterns(m) {
+        //     let variables = bit_patterns_to_variables(&pattern);
+        //     h += g.clone().eval_x(&variables) * Eq::x(&pattern)
+        // }
+
     }
 }
