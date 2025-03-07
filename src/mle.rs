@@ -61,7 +61,9 @@ fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
             if matrix[i][j] == Fr::ZERO {
                 continue;
             }
-            mle += matrix[i][j] * Eq::x(&bit_patterns_to_fr(&x_pattern)) * Eq::y(&bit_patterns_to_fr(&y_pattern));
+            mle += matrix[i][j]
+                * Eq::x(&bit_patterns_to_fr(&x_pattern))
+                * Eq::y(&bit_patterns_to_fr(&y_pattern));
         }
     }
 
@@ -92,8 +94,10 @@ impl Poly {
 
     pub fn fin(self) -> Fr {
         let mut sum = Fr::ZERO;
+        assert!(self.sum.len() != 0);
         for (coeff, eq) in self.sum {
-            assert!(eq.inner.0.is_none() & eq.inner.1.is_none()); // eqには係数しかないことを確認
+
+            assert!(eq.inners_x.is_none() & eq.inners_y.is_none()); // eqには係数しかないことを確認
             sum += coeff;
         }
 
@@ -110,48 +114,55 @@ impl Poly {
         sum
     }
 
-    fn eval(self, values: &Vec<Option<Fr>>, var: &Var) -> Self {
-        let is_x = match var {
-            Var::X => true,
-            Var::Y => false,
-        };
-
+    fn eval(self, evals: &Vec<Option<Fr>>, var: &Var) -> Self {
         let mut sum = vec![];
 
         for (mut coeff, eq) in self.sum {
-            let (x, y) = eq.inner;
+            // 選択された変数の方に対して処理を行っていく。
+            let (inners, _inners) = match var {
+                Var::X => (eq.inners_x, eq.inners_y),
+                Var::Y => (eq.inners_y, eq.inners_x),
+            };
 
-            let (a, b) = if is_x { (x, y) } else { (y, x) };
+            let Some(inners) = inners else {
+                panic!();
+            };
 
-            let a = match a {
-                Some(a) => {
-                    assert!(values.len() == a.len());
+            let mut new_inners = vec![];
+            for inner in inners {
+                assert!(inner.len() == evals.len());
 
-                    let mut new_a = vec![];
-
-                    for (a_i, v_i) in a.iter().zip(values) {
-                        if let Some(v_i) = v_i {
-                            let a_i = Fr::from(*a_i);
-                            coeff *= (Fr::ONE - a_i) * (Fr::ONE - v_i) + a_i * v_i;
-                        } else {
-                            new_a.push(*a_i)
-                        }
-                    }
-                    if new_a.is_empty() {
-                        None
+                let mut new_inner = vec![];
+                for (vi, ei) in inner.into_iter().zip(evals) {
+                    // 評価して係数へまめる、もしくはそのまま変数を残す。
+                    if let Some(ei) = ei {
+                        coeff *= (Fr::ONE - vi) * (Fr::ONE - ei) + vi * ei;
                     } else {
-                        Some(new_a)
+                        new_inner.push(vi);
                     }
                 }
-                None => None,
-            };
+                if new_inner.len() != 0 {
+                    new_inners.push(new_inner)
+                }
+            }
 
             if coeff == Fr::ZERO {
                 continue;
             }
 
-            let (x, y) = if is_x { (a, b) } else { (b, a) };
-            sum.push((coeff, Eq { inner: (x, y) }))
+            let new_inners = if new_inners.len() == 0 {
+                None
+            } else {
+                Some(new_inners)
+            };
+
+            let (inners_x, inners_y) = match var {
+                Var::X => (new_inners, _inners),
+                Var::Y => (_inners, new_inners),
+            };
+            let eq = Eq { inners_x, inners_y };
+
+            sum.push((coeff, eq))
         }
         Self {
             coeff: self.coeff,
@@ -185,15 +196,12 @@ impl Mul<Eq> for Poly {
     fn mul(mut self, eq: Eq) -> Self::Output {
         let mut sum = vec![];
         for (coeff, term) in self.sum {
-            let poly = term * eq.clone();
-            let coeff_ab = coeff * poly.coeff;
-            if coeff_ab == Fr::ZERO {
+            let eq = term * eq.clone();
+            if coeff == Fr::ZERO {
                 // coeffが0の時はsumから除外する。
                 continue;
             }
-            assert!(poly.sum.len() == 1);
-            assert!(poly.sum[0].0 == Fr::ONE);
-            sum.push((coeff_ab, poly.sum[0].1.clone()))
+            sum.push((coeff, eq))
         }
         self.sum = sum;
         self
@@ -219,15 +227,13 @@ impl Mul<Poly> for Poly {
         let mut sum = vec![];
         for (coeff_a, eq_a) in self.sum {
             'inner: for (coeff_b, eq_b) in &rhs.sum {
-                let poly_ab = eq_a.clone() * eq_b.clone();
-                let coeff_ab = coeff_a * coeff_b * poly_ab.coeff;
+                let eq_ab = eq_a.clone() * eq_b.clone();
+                let coeff_ab = coeff_a * coeff_b;
                 if coeff_ab == Fr::ZERO {
                     // coeffが0の時はsumから除外する。
                     continue 'inner;
                 }
-                assert!(poly_ab.sum.len() == 1);
-                assert!(poly_ab.sum[0].0 == Fr::ONE);
-                sum.push((coeff_ab, poly_ab.sum[0].1.clone()))
+                sum.push((coeff_ab, eq_ab))
             }
         }
         Self { coeff, sum }
@@ -270,131 +276,49 @@ impl AddAssign for Poly {
     }
 }
 
+type Vi = Vec<Fr>;
 #[derive(PartialEq, Debug, Clone)]
 pub struct Eq {
-    inner: (Option<Vec<Fr>>, Option<Vec<Fr>>),
+    // Noneの場合は評価済みを表す。
+    inners_x: Option<Vec<Vi>>,
+    inners_y: Option<Vec<Vi>>,
 }
 
 impl Eq {
     pub fn x(inner: &[Fr]) -> Self {
         Self {
-            inner: (Some(inner.to_vec()), None),
+            inners_x: Some(vec![inner.to_vec()]),
+            inners_y: None,
         }
     }
     pub fn y(inner: &[Fr]) -> Self {
         Self {
-            inner: (None, Some(inner.to_vec())),
+            inners_x: None,
+            inners_y: Some(vec![inner.to_vec()]),
         }
-    }
-}
-
-fn same_bits(a: &[Fr], b: &[Fr]) -> bool {
-    a.iter().zip(b).all(|(a_i, b_i)| a_i == b_i)
-}
-
-fn get_new_inner_term(a: Vec<Fr>, b: Vec<Fr>) -> Result<Vec<Fr>, ()> {
-    assert_eq!(a.len(), b.len());
-    if same_bits(&a, &b) {
-        Ok(a)
-    } else {
-        Err(())
     }
 }
 
 // Eq * Eq -> Poly
 impl Mul<Eq> for Eq {
-    type Output = Poly;
+    type Output = Eq;
 
     fn mul(self, rhs: Eq) -> Self::Output {
-        let ((x1, y1), (x2, y2)) = (self.inner, rhs.inner);
-        let inner = match (x1, y1, x2, y2) {
-            (None, None, None, None) => (None, None),
-            (None, None, None, Some(y)) => (None, Some(y)),
-            (None, None, Some(x), None) => (Some(x), None),
-            (None, None, Some(x), Some(y)) => (Some(x), Some(y)),
-            (None, Some(y), None, None) => (None, Some(y)),
-            (None, Some(y), Some(x), None) => (Some(x), Some(y)),
-            (Some(x), None, None, None) => (Some(x), None),
-            (Some(x), None, None, Some(y)) => (Some(x), Some(y)),
-            (Some(x), Some(y), None, None) => (Some(x), Some(y)),
-
-            (None, Some(y1), None, Some(y2)) => {
-                let Ok(y) = get_new_inner_term(y1, y2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (None, Some(y))
-            }
-            (None, Some(y1), Some(x), Some(y2)) => {
-                let Ok(y) = get_new_inner_term(y1, y2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (Some(x), Some(y))
-            }
-            (Some(x1), None, Some(x2), None) => {
-                let Ok(x) = get_new_inner_term(x1, x2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (Some(x), None)
-            }
-            (Some(x1), None, Some(x2), Some(y)) => {
-                let Ok(x) = get_new_inner_term(x1, x2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (Some(x), Some(y))
-            }
-            (Some(x), Some(y1), None, Some(y2)) => {
-                let Ok(y) = get_new_inner_term(y1, y2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (Some(x), Some(y))
-            }
-            (Some(x1), Some(y), Some(x2), None) => {
-                let Ok(x) = get_new_inner_term(x1, x2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (Some(x), Some(y))
-            }
-            (Some(x1), Some(y1), Some(x2), Some(y2)) => {
-                let Ok(x) = get_new_inner_term(x1, x2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                let Ok(y) = get_new_inner_term(y1, y2) else {
-                    return Poly {
-                        coeff: Fr::ZERO,
-                        sum: vec![],
-                    };
-                };
-                (Some(x), Some(y))
-            }
-        };
-
-        let eq = Eq { inner };
-
-        Poly {
-            coeff: Fr::ONE,
-            sum: vec![(Fr::ONE, eq)],
+        fn merge_inner(inner_a: Option<Vec<Vi>>, inner_b: Option<Vec<Vi>>) -> Option<Vec<Vi>> {
+            let inner = match (inner_a, inner_b) {
+                (None, None) => None,
+                (None, Some(inner)) => Some(inner),
+                (Some(inner), None) => Some(inner),
+                // todo: 同じやつはまとめてもいいかも。
+                (Some(a), Some(b)) => Some(a.into_iter().chain(b.into_iter()).collect()),
+            };
+            inner
         }
+
+        let inners_x = merge_inner(self.inners_x, rhs.inners_x);
+        let inners_y = merge_inner(self.inners_y, rhs.inners_y);
+
+        Self { inners_x, inners_y }
     }
 }
 
@@ -555,7 +479,6 @@ pub mod tests {
 
     #[test]
     fn check_sumcheck() {
-
         let m1_mle = MLE::matrix(&frmatrix!(
             [1, 1, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0],
@@ -584,7 +507,6 @@ pub mod tests {
         let m2z1 = m2_mle * z1_mle.clone();
         let m3z1 = m3_mle * z1_mle.clone();
 
-
         let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
 
         let beta = frvec![57, 23]; // 本来は乱数。
@@ -600,7 +522,7 @@ pub mod tests {
         let q1 = q.clone().eval_x(&vec![None, Some(Fr::ONE)]); // Proverが用意する。
         let s1 = q1.clone(); // Verifierに渡す。
         // Verifier
-        let sum_s1 = s1.clone().sum(m, &Var::X).fin();
+        let sum_s1 = (s1.clone().eval_x(&vec![Some(Fr::ZERO)]) + s1.clone().eval_x(&vec![Some(Fr::ONE)])).fin();
         assert_eq!(sum_s1, Fr::ZERO);
         let r1 = fr!(84); // 本来は乱数。
 
@@ -608,20 +530,14 @@ pub mod tests {
         // Prover
         let q2 = q.clone().eval_x(&vec![Some(r1), None]);
         let s2 = q2.clone(); // Verifierに渡す。
-
-
-        // println!("g {:?}", g);
-        println!("q {:?}", q);
-        println!("eq {:?}", Eq::x(&beta));
-        // println!("q1 {:?}", q1);
-
         // Verifier
-        // let r1_s1 = s1.clone().eval_x(&vec![Some(r1)]).fin();
-        // let sum_s2 = s2.clone().sum(m, &Var::X).fin();
-        // println!("{:?} {:?}", r1_s1, sum_s2);
-        // assert_eq!(r1_s1, sum_s2);
-
-        assert!(false)
+        let r1_s1 = s1.clone().eval_x(&vec![Some(r1)]).fin();
+        let sum_s2 = (s2.clone().eval_x(&vec![Some(Fr::ZERO)]) + s2.clone().eval_x(&vec![Some(Fr::ONE)])).fin();
+        println!("{:?} {:?}", r1_s1, sum_s2);
+        assert_eq!(r1_s1, sum_s2);
+        assert!(r1_s1 != Fr::ZERO);
+        let r2 = fr!(31); // 本来は乱数。
+        let r2_q2 = s2.clone().eval_x(&vec![Some(r2)]).fin();
 
     }
 }
