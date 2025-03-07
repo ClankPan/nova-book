@@ -96,7 +96,6 @@ impl Poly {
         let mut sum = Fr::ZERO;
         assert!(self.sum.len() != 0);
         for (coeff, eq) in self.sum {
-
             assert!(eq.inners_x.is_none() & eq.inners_y.is_none()); // eqには係数しかないことを確認
             sum += coeff;
         }
@@ -521,8 +520,10 @@ pub mod tests {
         // Prover
         let q1 = q.clone().eval_x(&vec![None, Some(Fr::ONE)]); // Proverが用意する。
         let s1 = q1.clone(); // Verifierに渡す。
-        // Verifier
-        let sum_s1 = (s1.clone().eval_x(&vec![Some(Fr::ZERO)]) + s1.clone().eval_x(&vec![Some(Fr::ONE)])).fin();
+                             // Verifier
+        let sum_s1 = (s1.clone().eval_x(&vec![Some(Fr::ZERO)])
+            + s1.clone().eval_x(&vec![Some(Fr::ONE)]))
+        .fin();
         assert_eq!(sum_s1, Fr::ZERO);
         let r1 = fr!(84); // 本来は乱数。
 
@@ -530,14 +531,15 @@ pub mod tests {
         // Prover
         let q2 = q.clone().eval_x(&vec![Some(r1), None]);
         let s2 = q2.clone(); // Verifierに渡す。
-        // Verifier
+                             // Verifier
         let r1_s1 = s1.clone().eval_x(&vec![Some(r1)]).fin();
-        let sum_s2 = (s2.clone().eval_x(&vec![Some(Fr::ZERO)]) + s2.clone().eval_x(&vec![Some(Fr::ONE)])).fin();
+        let sum_s2 = (s2.clone().eval_x(&vec![Some(Fr::ZERO)])
+            + s2.clone().eval_x(&vec![Some(Fr::ONE)]))
+        .fin();
         println!("{:?} {:?}", r1_s1, sum_s2);
         assert_eq!(r1_s1, sum_s2);
         assert!(r1_s1 != Fr::ZERO);
         let r2 = fr!(31); // 本来は乱数。
-        let r2_q2 = s2.clone().eval_x(&vec![Some(r2)]).fin();
-
+        let _r2_q2 = s2.clone().eval_x(&vec![Some(r2)]).fin();
     }
 }
