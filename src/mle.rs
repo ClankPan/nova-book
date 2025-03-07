@@ -186,9 +186,14 @@ impl Mul<Eq> for Poly {
         let mut sum = vec![];
         for (coeff, term) in self.sum {
             let poly = term * eq.clone();
+            let coeff_ab = coeff * poly.coeff;
+            if coeff_ab == Fr::ZERO {
+                // coeffが0の時はsumから除外する。
+                continue;
+            }
             assert!(poly.sum.len() == 1);
             assert!(poly.sum[0].0 == Fr::ONE);
-            sum.push((coeff, poly.sum[0].1.clone()))
+            sum.push((coeff_ab, poly.sum[0].1.clone()))
         }
         self.sum = sum;
         self
@@ -582,7 +587,41 @@ pub mod tests {
 
         let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
 
-        // let beta = fr
-        // let q = g * MLE::x()
+        let beta = frvec![57, 23]; // 本来は乱数。
+        let q = g.clone() * Eq::x(&beta); // Eq::x(&beta)はbetaが{0,1}でないなら高確率で0以外になるので、gがどの値でも0になることを確認できる。
+
+        let sum_q = q.clone().sum(m, &Var::X).fin();
+        assert_eq!(sum_q, Fr::ZERO);
+
+        // Outer-sumcheck
+
+        /* Round 1 */
+        // Prover
+        let q1 = q.clone().eval_x(&vec![None, Some(Fr::ONE)]); // Proverが用意する。
+        let s1 = q1.clone(); // Verifierに渡す。
+        // Verifier
+        let sum_s1 = s1.clone().sum(m, &Var::X).fin();
+        assert_eq!(sum_s1, Fr::ZERO);
+        let r1 = fr!(84); // 本来は乱数。
+
+        /* Round 2 */
+        // Prover
+        let q2 = q.clone().eval_x(&vec![Some(r1), None]);
+        let s2 = q2.clone(); // Verifierに渡す。
+
+
+        // println!("g {:?}", g);
+        println!("q {:?}", q);
+        println!("eq {:?}", Eq::x(&beta));
+        // println!("q1 {:?}", q1);
+
+        // Verifier
+        // let r1_s1 = s1.clone().eval_x(&vec![Some(r1)]).fin();
+        // let sum_s2 = s2.clone().sum(m, &Var::X).fin();
+        // println!("{:?} {:?}", r1_s1, sum_s2);
+        // assert_eq!(r1_s1, sum_s2);
+
+        assert!(false)
+
     }
 }
