@@ -1,6 +1,5 @@
 use ark_ff::{AdditiveGroup, Field};
 use ark_test_curves::bls12_381::Fr;
-use itertools::Itertools;
 
 use std::ops::{Add, AddAssign, Mul};
 
@@ -20,7 +19,21 @@ pub enum Var {
     Y,
 }
 
-pub fn vector_mle(vector: &[Fr], var: Var) -> Poly {
+pub struct MLE {}
+
+impl MLE {
+    pub fn vec_x(vector: &[Fr]) -> Poly {
+        vector_mle(vector, Var::X)
+    }
+    pub fn vec_y(vector: &[Fr]) -> Poly {
+        vector_mle(vector, Var::Y)
+    }
+    pub fn matrix(matrix: &Vec<Vec<Fr>>) -> Poly {
+        matrix_mle(matrix)
+    }
+}
+
+fn vector_mle(vector: &[Fr], var: Var) -> Poly {
     let eq = match var {
         Var::X => Eq::x,
         Var::Y => Eq::y,
@@ -34,7 +47,7 @@ pub fn vector_mle(vector: &[Fr], var: Var) -> Poly {
     mle
 }
 
-pub fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
+fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
     let m = matrix.len();
     let n = matrix[0].len();
 
@@ -49,7 +62,6 @@ pub fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
     mle
 }
 
-
 impl Poly {
     pub fn new() -> Self {
         Self {
@@ -57,6 +69,7 @@ impl Poly {
             sum: vec![],
         }
     }
+
     pub fn fin(self) -> Fr {
         let mut sum = Fr::ZERO;
         for (coeff, eq) in self.sum {
@@ -67,7 +80,22 @@ impl Poly {
         sum
     }
 
-    fn eval(self, values: &Vec<Option<Fr>>, is_x: bool) -> Self {
+    pub fn sum(self, bit_len: usize, var: &Var) -> Poly {
+        let mut sum = Poly::new();
+        for pattern in all_bit_patterns(bit_len) {
+            let pattern = pattern.into_iter().map(|b| Some(Fr::from(b))).collect();
+            sum += self.clone().eval(&pattern, &var);
+        }
+
+        sum
+    }
+
+    fn eval(self, values: &Vec<Option<Fr>>, var: &Var) -> Self {
+        let is_x = match var {
+            Var::X => true,
+            Var::Y => false,
+        };
+
         let mut sum = vec![];
 
         for (mut coeff, eq) in self.sum {
@@ -108,11 +136,11 @@ impl Poly {
     }
 
     pub fn eval_x(self, values: &Vec<Option<Fr>>) -> Self {
-        self.eval(values, true)
+        self.eval(values, &Var::X)
     }
 
     pub fn eval_y(self, values: &Vec<Option<Fr>>) -> Self {
-        self.eval(values, false)
+        self.eval(values, &Var::Y)
     }
 }
 
@@ -231,11 +259,25 @@ impl Mul<Eq> for Eq {
     type Output = Self;
 
     fn mul(self, rhs: Eq) -> Self::Output {
-        let inner = match (self.inner, rhs.inner) {
-            ((Some(x), None), (None, Some(y))) | ((None, Some(x)), (Some(y), None)) => {
-                (Some(x), Some(y))
-            }
-            _ => todo!(),
+        let ((x1, x2), (y1, y2)) = (self.inner, rhs.inner);
+        let inner = match (x1, x2, y1, y2) {
+            (None, None, None, None) => (None, None),
+            (None, None, None, Some(y)) => (None, Some(y)),
+            (None, None, Some(x), None) => (Some(x), None),
+            (None, None, Some(x), Some(y)) => (Some(x), Some(y)),
+            (None, Some(y), None, None) => (None, Some(y)),
+            (None, Some(y), Some(x), None) => (Some(x), Some(y)),
+            (Some(x), None, None, None) => (Some(x), None),
+            (Some(x), None, None, Some(y)) => (Some(x), Some(y)),
+            (Some(x), Some(y), None, None) => (Some(x), Some(y)),
+
+            (None, Some(y_a), None, Some(y_b)) => todo!(),
+            ((None, Some(y_a), Some(x), Some(y_b))) => todo!(),
+            ((Some(x_a), None, Some(x_b), None)) => todo!(),
+            ((Some(x), Nonem, Some(x_b), Some(y))) => todo!(),
+            ((Some(x), Some(y_a), None, Some(y_b))) => todo!(),
+            ((Some(x_a), Some(y), Some(x_b), None)) => todo!(),
+            ((Some(x_a), Some(y_a), Some(x_b), Some(y_b))) => todo!(),
         };
 
         Self { inner }
@@ -278,17 +320,15 @@ pub mod tests {
         let vector = frvec![11, 22, 33, 44];
         let mle = vector_mle(&vector, Var::X);
 
-        let x_variables = bvec![0, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
-        assert_eq!(mle.clone().eval_x(&x_variables).fin(), fr!(11));
+        let v_00 = bvec![0, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_01 = bvec![0, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_10 = bvec![1, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
+        let v_11 = bvec![1, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
 
-        let x_variables = bvec![0, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
-        assert_eq!(mle.clone().eval_x(&x_variables).fin(), fr!(22));
-
-        let x_variables = bvec![1, 0].into_iter().map(|b| Some(Fr::from(b))).collect();
-        assert_eq!(mle.clone().eval_x(&x_variables).fin(), fr!(33));
-
-        let x_variables = bvec![1, 1].into_iter().map(|b| Some(Fr::from(b))).collect();
-        assert_eq!(mle.clone().eval_x(&x_variables).fin(), fr!(44));
+        assert_eq!(mle.clone().eval_x(&v_00).fin(), fr!(11));
+        assert_eq!(mle.clone().eval_x(&v_01).fin(), fr!(22));
+        assert_eq!(mle.clone().eval_x(&v_10).fin(), fr!(33));
+        assert_eq!(mle.clone().eval_x(&v_11).fin(), fr!(44));
     }
 
     #[test]
@@ -325,5 +365,42 @@ pub mod tests {
         assert_eq!(mle.clone().eval_x(&v_11).eval_y(&v_01).fin(), fr!(42));
         assert_eq!(mle.clone().eval_x(&v_11).eval_y(&v_10).fin(), fr!(43));
         assert_eq!(mle.clone().eval_x(&v_11).eval_y(&v_11).fin(), fr!(44));
+    }
+
+    #[test]
+    fn check_fibobacci_ccs() {
+        let m1_mle = MLE::matrix(&frmatrix!(
+            [1, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+        let m2_mle = MLE::matrix(&frmatrix!(
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+        let m3_mle = MLE::matrix(&frmatrix!(
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+
+        let m = 4;
+        let n = 8;
+
+        let z1_mle = MLE::vec_y(&frvec![0, 1, 1, 2, 3, 6, 6, 1]);
+
+        let m1z1 = m1_mle * z1_mle.clone();
+        let m2z1 = m2_mle * z1_mle.clone();
+        let m3z1 = m3_mle * z1_mle.clone();
+
+        let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
+
+        let res = g.sum(m, &Var::X).fin();
+
+        assert_eq!(res, Fr::ZERO);
     }
 }
