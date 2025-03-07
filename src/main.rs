@@ -41,21 +41,23 @@ fn main() {
     let m2z1 = m2_mle * z1_mle.clone();
     let m3z1 = m3_mle * z1_mle.clone();
 
-    println!("\n");
-    let sum_m1z1 = sum_all_patterns!(n, "y", m1z1);
-    let sum_m2z1 = sum_all_patterns!(n, "y", m2z1);
-    let sum_m3z1 = sum_all_patterns!(n, "y", m3z1);
-    let g = sum_m1z1.clone() * sum_m2z1.clone() + fr!(-1) * sum_m3z1.clone();
+    let g = sum_all_patterns!(n, "y", m1z1) * sum_all_patterns!(n, "y", m2z1) + fr!(-1) * sum_all_patterns!(n, "y", m3z1);
+
     let h = all_bit_patterns(m)
         .into_iter()
         .map(|pattern| g.clone().evaluate("x", &pattern) * MLE::eq("x", &pattern))
         .reduce(|acc, x| acc + x)
         .unwrap();
 
-    let beta= bvec![0,1]; // 本来はランダム
-    let q = g * MLE::eq("x", &beta);
-
     println!("h: {:?}", h.evaluate("x", &bvec![0,1]).fin().unwrap());
+
+
+    let beta= bvec![0,1]; // 本来はランダム
+    let _q = g * MLE::eq("x", &beta);
+
+    // Round 1
+    // メモ: 変数のビットを一つずつ評価できないとダメみたい
+
 }
 
 type ProdTerms = (Fr, Vec<bool>);
@@ -137,6 +139,8 @@ impl MLE {
                 }
             }
         }
+
+        // todo!();
 
         Self {
             sum,
