@@ -421,17 +421,8 @@ macro_rules! frmatrix {
             // 各セルをチェック・変換
             $(
                 let num = $val;
-                assert!(
-                    num == 0 || num == 1,
-                    "frmatrix!: invalid value `{}`, allowed only 0 or 1",
-                    num
-                );
                 row_vec.push(
-                    if num == 1 {
-                        ark_test_curves::bls12_381::Fr::ONE
-                    } else {
-                        ark_test_curves::bls12_381::Fr::ZERO
-                    }
+                    Fr::from(num)
                 );
                 col_count += 1;
             )*
