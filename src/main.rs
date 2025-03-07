@@ -8,6 +8,9 @@ use std::{
     vec,
 };
 
+pub mod mle;
+// pub use mel::*;
+
 fn main() {
     // MLE::eq("x",&bvec![0,1,1]);
     // vector_mle(&frvec![0,1,1]);
@@ -41,7 +44,8 @@ fn main() {
     let m2z1 = m2_mle * z1_mle.clone();
     let m3z1 = m3_mle * z1_mle.clone();
 
-    let g = sum_all_patterns!(n, "y", m1z1) * sum_all_patterns!(n, "y", m2z1) + fr!(-1) * sum_all_patterns!(n, "y", m3z1);
+    let g = sum_all_patterns!(n, "y", m1z1) * sum_all_patterns!(n, "y", m2z1)
+        + fr!(-1) * sum_all_patterns!(n, "y", m3z1);
 
     let h = all_bit_patterns(m)
         .into_iter()
@@ -49,15 +53,13 @@ fn main() {
         .reduce(|acc, x| acc + x)
         .unwrap();
 
-    println!("h: {:?}", h.evaluate("x", &bvec![0,1]).fin().unwrap());
+    println!("h: {:?}", h.evaluate("x", &bvec![0, 1]).fin().unwrap());
 
-
-    let beta= bvec![0,1]; // 本来はランダム
+    let beta = bvec![0, 1]; // 本来はランダム
     let _q = g * MLE::eq("x", &beta);
 
     // Round 1
     // メモ: 変数のビットを一つずつ評価できないとダメみたい
-
 }
 
 type ProdTerms = (Fr, Vec<bool>);
