@@ -1,5 +1,7 @@
 ---
-title: Nova Book
+title: ゼロ知識証明を知りたい人のためのzkVM作成入門
+author: ClankPan
+date: 2025-03-12
 ---
 
 # Nova Book
