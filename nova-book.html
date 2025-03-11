@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Nova Book</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Nova Book</h1>
+</header>
+<h1 id="nova-book">Nova Book</h1>
+<h2 id="歴史的な背景について">1. 歴史的な背景について。</h2>
+<p>ゼロ知識証明というのは、その名の通り、「自分が持っている情報を明かさず、持っていることだけを証明する」技術の総称です。自分が隠したい情報を秘匿することが主な内容ですが、最近は計算量を圧縮することができる特性が注目されています。</p>
+<p>ブロックチェーン上で何かを計算させると、その計算量に応じてとにかく支払うコストが莫大にかかります。そこで、少しでも計算量を減らしたいという動機が生まれ、この技術に注目と投資が集まるようになりました。これが近年急速にゼロ知識証明の研究が進んでいる理由です。</p>
+<h2 id="計算量を減らすとは">2. 計算量を減らすとは。</h2>
+<p>計算量を圧縮できるとはどういうことでしょうか。これは、問題を解く計算量と答えを検証する計算量が対応ではない、というありふれた問題として考えることができます。</p>
+<p>たとえば、ソートを例に考えてみましょう。数字を順列に並び替えるには、最速でも
+<span class="math inline">\(O(n\log{n})\)</span>
+を必要とします。しかし、順列であることを確かめるだけだと、単純に考えても<span
+class="math inline">\(O(n)\)</span>
+だけです。つまり、100個の数字があるとすれば、ソートにはざっくり660回程度の計算が必要になりますが、確かめるには100回程度だけです。</p>
+<p>このように、解く計算量よりも検証する計算の方が小さい、といった問題はありふれています。これをNP問題と呼びます。</p>
+<p>「自力で解を見つけるのは効率的にできるとは限らないが、いったん解を与えられれば、それが正しいかどうかは効率的に確かめられる」といった具合です。</p>
+<h2 id="例えば複雑な計算をソート問題へ帰着できればいい">3.
+例えば、複雑な計算をソート問題へ帰着できればいい。</h2>
+<p>ではもし仮に、プログラムなどの計算をソート問題に置き換えることができるのなら、検証者は順列であるかを確かめるだけでプログラムが正しいことを検証できます。</p>
+<p>つまり、(1) 計算をとある問題へ変換する、 (2)
+その問題の解を少ない計算量で検証してもらう、の二つに分けることができます。</p>
+<p>実際にはプログラムをソート問題には置き換えることができないので、別の問題を使います。</p>
+<h2 id="ソートの代わりにfx0">4. ソートの代わりに、<span
+class="math inline">\(f(x)=0\)</span></h2>
+<p>先ほどの例で使ったソート問題の代わりに、シュワルツ・ジッペルの補題（Schwartz-Zippel
+lemma）とSumcheck（合計チェック）いうものを使います。これを使うと、<span
+class="math inline">\(f(x)=0\)</span> がどの <span
+class="math inline">\(x\)</span>
+に対しても成り立つことを、ランダムな点で <span
+class="math inline">\(f(x)\)</span>
+を一回だけ評価することで確かめることができます。</p>
+<p>つまり、プログラムを <span class="math inline">\(f(x)=0\)</span>
+となるような <span class="math inline">\(f\)</span>
+に変換さえすることができれば、あとはこの問題の解を検証者に確かめさせるだけです。</p>
+<p>シュワルツ・ジッペルの補題について少しだけ説明すると、二つの多項式をランダムな点で評価した結果が一致していれば、限りなく高い確率で2つは同じ多項式であると見なせるというものです。</p>
+<p>中学や高校の数学の授業で、「二つの式が交わる点を求めよ」という問題を解いたことはないでしょうか。2つの式のグラフは、ほとんどの場所で重ならず、一点か二点だけでしか交わりません。なので、
+<span class="math inline">\(x\)</span>
+を十分に大きな範囲からランダムに選べるのであれば、異なる式がその点で交わる確率はごく僅かで、この確率は実用上は無視することができます。</p>
+<h2 id="よく使われる計算の表現方法a-times-b-c">5.
+よく使われる計算の表現方法、<span class="math inline">\(a \times b =
+c\)</span></h2>
+<p>プログラムを <span class="math inline">\(f(x)=0\)</span> となる多項式
+<span class="math inline">\(f\)</span>
+に変換していくにはいくつかのステップが必要です。まずは計算を <span
+class="math inline">\(a \times b = c\)</span>
+の連なりで表現していきます。ルールとしては、a,b,cの項の中にはいくら足し算を入れもていいですが、掛け算は1行につき
+<span class="math inline">\(a \times b\)</span>
+の一回だけですので、もう一度掛け算が必要な場合は次の行に行ってください。</p>
+<p>フィボナッチ数列なら次のようになります。aとbを足した結果がcとなり、次の行ではbとcが足されdとなっています。</p>
+<p><span class="math display">\[
+\begin{aligned}
+(a + b) \times 1 &amp;= c \\
+(b + c) \times 1 &amp;= d \\
+(c + d) \times 1 &amp;= e \\
+(d + e) \times 1 &amp;= f \\
+\end{aligned}
+\]</span></p>
+<p>$ ax^3 + b x^2 + cx + d = e$ なら次のようになります。 <span
+class="math inline">\(x^2\)</span> と <span
+class="math inline">\(x^3\)</span> はそれ自体が <span
+class="math inline">\(x\)</span> の掛け算なので、<span
+class="math inline">\(v,w\)</span> に割り当ててあげて、<span
+class="math inline">\(ax^3\)</span> などは中間結果として <span
+class="math inline">\(\alpha\)</span> と置いてあげます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+x \times x &amp;= v \\
+x \times v &amp;= w \\
+a \times w &amp;= \alpha \\
+b \times v &amp;= \beta \\
+c \times x &amp;= \gamma \\
+(\alpha + \beta + \gamma + d) \times 1 &amp;= e
+\end{aligned}
+\]</span></p>
+<p>個の表現方法でプログラムのすべてを書き出すのは少々骨が折れる作業ですが、全くできないという程でもありません。今はこの形に変換するツールなどもあるので、それらを使えば好きなプログラムをこの形式に直すこともできます。</p>
+<p>プログラムをこの形式に直すことができれば、あとはこの形式をどう、とある問題（
+<span class="math inline">\(f(x)=0\)</span>
+など）に置き換えるかを考えればいいだけなので、割とよく出てくる中間表現です。</p>
+<h2 id="行列でこれを表現する">6. 行列でこれを表現する。</h2>
+<p>さて、プログラムを単純な形で表現することができましたが、これだけでは不十分です。なぜなら、<span
+class="math inline">\(a,b,c,d,v,w,x,..\)</span>
+などの変数は、文字的に同じ変数と見なしているだけで、それらが同じであるかを制約するものは何もないからです。</p>
+<p>このような変数の使い回しを式で表現するには、行列の掛け算を使います。用意するのは、要素が
+<span class="math inline">\(0,1\)</span> で構成された <span
+class="math inline">\(m \times n\)</span> 行列 <span
+class="math inline">\(A\)</span> と、すべての変数が列挙された <span
+class="math inline">\(n \times 1\)</span> 行列 <span
+class="math inline">\(Z\)</span> です。すると、次のように、<span
+class="math inline">\(Z\)</span>
+から選ばれた変数の合計が結果となります。</p>
+<p><span class="math display">\[
+\begin{aligned}
+A \cdot Z &amp;=
+\begin{bmatrix}
+1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+a \\
+b \\
+c \\
+d \\
+e \\
+f \\
+0 \\
+1 \\
+\end{bmatrix}
+&amp;=
+\begin{bmatrix}
+a + b \\
+b + c \\
+c + d \\
+d + e \\
+\end{bmatrix} \\
+\end{aligned}
+\]</span></p>
+<p>左の行列の中で、1になっている列番目が、対応する <span
+class="math inline">\(Z\)</span>
+の行番目になっていることがわかります。1行目では [1 1 0 0 …]
+となっているので、 <span class="math inline">\(Z\)</span>
+の1行目と2行目の <span class="math inline">\(a,b\)</span>
+が選択され、行列の掛け算の規則により、それらが足された値が結果の行列の1行目の要素となっています。</p>
+<p><span class="math display">\[
+(1 \cdot a) + (1 \cdot b) + (0 \cdot c) + (0 \cdot d) + (0 \cdot e) + (0
+\cdot f) + (0 \cdot 0) + (0 \cdot 1)
+\]</span></p>
+<p>これは、先ほどのフィボナッチ数列の <span class="math inline">\(a
+\times b = c\)</span> のうち、<span class="math inline">\(a\)</span>
+のすべての項の集合になっていることがわかります。 <span
+class="math inline">\(b,c\)</span>
+についても、次のように変数を選び、その和をとります。ただし、フィボナッチ数列では
+<span class="math inline">\(a\)</span>
+以外では和を取らないので、ただ変数を選択しただけになっています。</p>
+<p><span class="math display">\[
+\begin{aligned}
+B \cdot Z &amp;=
+\begin{bmatrix}
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+a \\
+b \\
+c \\
+d \\
+e \\
+f \\
+0 \\
+1 \\
+\end{bmatrix}
+&amp;=
+\begin{bmatrix}
+1 \\
+1 \\
+1 \\
+1 \\
+\end{bmatrix}\\
+C \cdot Z &amp;=
+\begin{bmatrix}
+0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 \\
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+a \\
+b \\
+c \\
+d \\
+e \\
+f \\
+0 \\
+1 \\
+\end{bmatrix}
+&amp;=
+\begin{bmatrix}
+c \\
+d \\
+e \\
+f \\
+\end{bmatrix} \\
+\end{aligned} \\
+\]</span></p>
+<p>最終的に、これを行列の式で表すと、次のようになります。 <span
+class="math inline">\(\circ\)</span> 記号は アダマール積（Hadamard
+Product）といって、重なり合う要素の掛け算だけをする演算記号です。普通の行列の掛け算は
+<span class="math inline">\(\cdot\)</span> 記号で表されます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+A \cdot Z \quad \circ \quad B \cdot Z  \quad &amp;= \quad C \cdot Z  \\
+\\
+\begin{bmatrix}
+a + b \\
+b + c \\
+c + d \\
+d + e \\
+\end{bmatrix}
+\quad
+\circ
+\quad
+\begin{bmatrix}
+1 \\
+1 \\
+1 \\
+1 \\
+\end{bmatrix}
+\quad
+&amp;=
+\quad
+\begin{bmatrix}
+c \\
+d \\
+e \\
+f \\
+\end{bmatrix} \\
+\end{aligned}
+\]</span></p>
+<p>行列を使うことで、どの変数をどう使うかを表現することができました。この表現方法はR1CS（Rank-1
+Constrain System）と呼ばれます。</p>
+<h2 id="まずは多項式にしよう">7. まずは多項式にしよう。</h2>
+<p>行列式のままでは、掛け算などの手順が複雑なので、これを一旦次のような式に変形します。
+<span class="math inline">\(\sum\)</span> は <span
+class="math inline">\(i\)</span>
+を0からN-1まで順番にあげていき、その和を取る演算記号です。上の行列式の
+<span class="math inline">\(0\)</span>
+行目の計算と一致していることがわかると思います。</p>
+<p><span class="math display">\[
+\sum_{i=0}^N{A[0,i] \cdot Z[i]} \quad \cdot \quad \sum_{i=0}^N{B[0,i]
+\cdot Z[i]} \quad = \quad \sum_{i=0}^N{C[0,i] \cdot Z[i]}
+\]</span></p>
+<p>上の式では、<span class="math inline">\(A[X,Y]\)</span>
+でX行Y列の要素を取り出していますが、これは多項式の一部ではありません。なので、変数
+<span class="math inline">\(x\)</span>
+によって同じように取り出せなくてはなりません。</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;f(x) = \sum_{i=0}^N{A(x,i) \cdot Z(i)} \quad \cdot \quad
+\sum_{i=0}^N{B(x,i) \cdot Z(i)} \quad - \quad \sum_{i=0}^N{C(x,i) \cdot
+Z(i)} = 0, \\
+&amp;\{x | 0 \le x \lt N \}
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(A(x,y)\)</span>
+などをどう作るかは置いておいて、<span
+class="math inline">\(f(x)=0\)</span> の形に近くなってきました。どんな
+<span class="math inline">\(x\)</span>
+とはいかずとも、0からN-1の区間なら0になります。</p>
+<h2 id="行列の要素を取り出す多項式を考える">8.
+行列の要素を取り出す多項式を考える。</h2>
+<p><span class="math inline">\(A(x,y)\)</span>
+を作るにはどうしたらいいでしょうか？　まずは変数が1つの<span
+class="math inline">\(Z(x)\)</span> から考えてみることにします。</p>
+<p><span class="math inline">\([a,b,c,d,e,f,0,1]\)</span>
+からn番目の要素を取り出すのは、先ほどの <span
+class="math inline">\(\{0,1\}\)</span>
+の行列で使ったテクニックを使います。つまり、取り出したい要素だけ1にして、それ以外は0にするという方法です。</p>
+<p><span class="math display">\[
+\begin{aligned}
+Z(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8) &amp;= (x_1 \cdot a) + (x_2
+\cdot b) \\
+&amp;+ (x_3 \cdot c) + (x_4 \cdot d) \\
+&amp;+ (x_5 \cdot e) + (x_6 \cdot f) \\
+&amp;+ (x_7 \cdot 0) + (x_8 \cdot 1)
+\end{aligned}
+\]</span></p>
+<p>しかし、これでは変数の数が多い上に、2つ以上を選択してその合計値を取ってくることが出来てしまします。そこで、<span
+class="math inline">\(Z\)</span> への入力は <span
+class="math inline">\(n\)</span>
+を二進数で渡せるようにします。これだと、要素が8個ならば3つの変数だけでよく、さらに同時に1つの要素しか選択できません。</p>
+<p>用意するのは、2つの二進数が一致すれば <span
+class="math inline">\(1\)</span> , 異なれば <span
+class="math inline">\(0\)</span>
+になる多項式です。これは次のように作ることができます。 <span
+class="math inline">\(\prod\)</span> は <span
+class="math inline">\(i\)</span>
+を増やしていって、その積をとる演算記号です。 <span
+class="math inline">\(\sum\)</span>
+の掛け算バージョンだと思ってください。</p>
+<p><span class="math display">\[
+eq((x_1, x_2, x_3), (y_1, y_2, y_3)) = \prod_{i=1}^4{(1-x_i)(1-y_i) +
+x_i y_i}
+\]</span></p>
+<p>3bitはここに書くのは長いので2bitにしますが、展開するとこのようになります。ビットが違う項はゼロになるので、一つでもゼロになれば掛け算によって結果もゼロになります。</p>
+<p><span class="math display">\[
+\begin{aligned}
+eq((1,0), (1,0)) = \{(1-1)(1-1) + 1 \cdot 1 \} \cdot   \{(1-0)(1-0) + 0
+\cdot 0 \} &amp;= 1, \\
+eq((0,1), (1,1)) = \{(1-0)(1-1) + 0 \cdot 1 \} \cdot   \{(1-1)(1-1) + 1
+\cdot 1 \} &amp;= 0, \\
+\end{aligned}
+\]</span></p>
+<p>ということで、<span class="math inline">\(eq\)</span> を使うと <span
+class="math inline">\(Z\)</span> は次のように書くことができます。 <span
+class="math inline">\(X\)</span> は <span class="math inline">\((x_1,
+x_2, x_3)\)</span> のことです。</p>
+<p><span class="math display">\[
+\begin{aligned}
+Z(X) &amp;= a \cdot eq(X, (0,0,0)) + b \cdot eq(X, (0,0,1)) \\
+&amp;+ c \cdot eq(X, (0,1,0)) + d \cdot eq(X, (0,1,1)) \\
+&amp;+ e \cdot eq(X, (1,0,0)) + f \cdot eq(X, (1,0,1)) \\
+&amp;+ 0 \cdot eq(X, (1,1,0)) + 1 \cdot eq(X, (1,1,1))
+\end{aligned}
+\]</span></p>
+<p>これを定義にしてみましょう。
+少し複雑なので順を追って説明していきます。 <span
+class="math inline">\(y\in \{0,1\}^{\log N}\)</span>
+は言葉にするなら、「Nをビットで表したときのすべてのパターン」です。<span
+class="math inline">\(Z[X]\)</span>
+は定数なので式を展開したときには実際の値が入ります。つまりこの式は、
+<span class="math inline">\(X\)</span> と <span
+class="math inline">\(y\)</span> のビットが一致するとき、それに対応する
+<span class="math inline">\(Z\)</span>
+の要素を取り出す、ということになります。</p>
+<p><span class="math display">\[
+Z(X) = \sum_{y\in \{0,1\}^{\log N}}{Z[X] \cdot eq(X, y)}
+\]</span></p>
+<p>例えば、このようになります。</p>
+<p><span class="math display">\[
+\begin{aligned}
+Z((0,0,0)) &amp;= a, \\
+Z((0,0,1)) &amp;= b, \\
+Z((0,1,0)) &amp;= c, \\
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(A,B,C\)</span>
+も同じように定義することができます。ただし、行と列の二つを指定する必要があるので、それぞれの要素に対して
+<span class="math inline">\(eq\)</span> を二つかけてあげます。</p>
+<p><span class="math display">\[
+A(X_1, X_2) = \sum_{y_1\in \{0,1\}^{\log M}} \sum_{y_2\in \{0,1\}^{\log
+N}}{A[X_1, X_2] \cdot eq(X_1, y_1) \cdot eq(X_2, y_2)}
+\]</span></p>
+<p><span class="math inline">\(eq\)</span>
+をベースに作った多項式は嬉しい性質があるので、他と区別できるようこれ以降は
+<span
+class="math inline">\(\tilde{Z}(\cdot),\tilde{A}(\cdot),\tilde{B}(\cdot),\tilde{C}(\cdot)\)</span>
+と表記しておきます。</p>
+<h2 id="多項式を1つにまとめる">9. 多項式を1つにまとめる。</h2>
+<p>定義した多項式を一つにまとめます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+G(X) &amp;= \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot
+\tilde{Z}(y)
+\cdot \sum_{y\in \{0,1\}^{\log N}} \tilde{B}(X, y) \cdot \tilde{Z}(y)
+- \sum_{y\in \{0,1\}^{\log N}} \tilde{C}(X, y) \cdot \tilde{Z}(y) \\
+\\
+&amp;X \in \{0,1\}^{\log M}
+\end{aligned}
+\]</span></p>
+<p>この <span class="math inline">\(G\)</span> は <span
+class="math inline">\(X\)</span> の全てのパターンで <span
+class="math inline">\(G(X) = 0\)</span>
+が成り立つはずです。もしどれか一つでも <span
+class="math inline">\(0\)</span> でなければ、それは不正な操作が行われ、
+<span class="math inline">\(a \times b = c\)</span>
+のどこかが間違っているということになります。例えば、 <span
+class="math inline">\(3 \times 2 = 5\)</span>
+のような式が含まれているということです。</p>
+<p>行列の行数 <span class="math inline">\(M = 4\)</span>
+なら変数は2つで、次のようになります。</p>
+<p><span class="math display">\[
+G((0,0)) = G((0,1)) = G((1,0)) = G((1,1)) = 0
+\]</span></p>
+<h2 id="打消して合計がゼロになる">10. 打消して合計がゼロになる。</h2>
+<p>全て <span class="math inline">\(0\)</span> になるのなら、合計も
+<span class="math inline">\(0\)</span>
+であるはずなので、一つの式にまとめることができます。 <span
+class="math display">\[
+\sum_{y\in \{0,1\}^{\log M}} G(y) = 0
+\]</span></p>
+<p>しかし、例えば、<span class="math inline">\(G((0,0)) = 1, G((0,1)) =
+-1\)</span> だとすると、お互いを打ち消してしまい、合計として <span
+class="math inline">\(0\)</span> になることを防げません。</p>
+<p>そこで、<span class="math inline">\(G\)</span>
+にランダムな係数をかけて、打消し合う可能性を小さくするという発想が考えられます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\sum_{y\in \{0,1\}^{\log M}} r_i \cdot G(y) \\
+\\
+&amp;= r_1 \cdot G((0,0)) + r_2 \cdot G((0,1)) + r_3 \cdot G((1,0)) +
+r_4 \cdot G((1,1)) \\
+&amp;= 1 \cdot r_1 + (-1) \cdot r_2 + 0 \cdot r_3 + 0 \cdot r_4\\
+&amp;\ne 0
+\end{aligned}
+\]</span></p>
+<p>だだし、これでは変数がなく、多項式ではなくなってしまうので、次のようにしてあげることで、多項式のままにすることができます。</p>
+<p><span class="math display">\[
+\tilde{Q}(\beta) = \sum_{y\in \{0,1\}^{\log M}} G(y) \cdot eq(y, \beta)
+= 0
+\]</span> 式を見ると、<span class="math inline">\(G\)</span>
+にかかるランダムな係数が、<span class="math inline">\(eq(y,
+\beta)\)</span>
+によって変化していくことがわかります。さらに、　ランダムな値 <span
+class="math inline">\(\beta\)</span> が <span
+class="math inline">\(\{0,1\}^s\)</span> でない限りは、 <span
+class="math inline">\(eq\)</span> がゼロになることはありません。なので、
+<span class="math inline">\(eq\)</span>
+はランダムな変数によって係数が変わり、さらにそれ自体が0にならない、という嬉しい性質があるのです。</p>
+<p>例えば、<span class="math inline">\(\beta = (11, 22)\)</span>
+ならば、次のように展開できます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+\tilde{Q}((11, 22)) &amp;= G((0,0)) \cdot (1-11) \cdot (1-22) \\
+&amp;+ G((0,1)) \cdot  (1-11) \cdot 22 \\
+&amp;+ G((1,0)) \cdot  11 \cdot (1-22) \\
+&amp;+ G((1,1)) \cdot  11\cdot 22 \\
+\end{aligned}
+\]</span></p>
+<h2 id="検証コストが減ってない">11. 検証コストが減ってない。</h2>
+<p><span class="math inline">\(\tilde{Q}\)</span>
+を展開してみるとわかるのですが、<span class="math inline">\(G\)</span>
+がゼロになるので、<span class="math inline">\(f(x) = 0 \cdot x_1 + 0
+\cdot x_2\)</span> のような、全ての項の係数が <span
+class="math inline">\(0\)</span>
+となるゼロ多項式となってしまいます。これでは、この多項式を検証者が渡されても何を検証していいか分からず、式の正当性を確かめられません。
+<span class="math inline">\(G\)</span> が 本当に <span
+class="math inline">\(0\)</span> であるかを確かめてもうらうには、<span
+class="math inline">\(G\)</span>
+の変数を残さなくてはいけないのです。</p>
+<p>そこで、<span class="math inline">\(Q(\beta)\)</span>
+から合計する前の項を取り出し、 <span class="math inline">\(g(X)\)</span>
+とします。検証者には、この <span class="math inline">\(g\)</span> が
+<span class="math inline">\(\{0,1\}^s\)</span> の全てで <span
+class="math inline">\(0\)</span>
+になることを確かめてもらうことで、計算が正しかったと検証してもらいます。</p>
+<p><span class="math display">\[
+g(X) =  G(X) \cdot eq(X, \beta)
+\]</span></p>
+<p>検証者に直接 <span class="math inline">\(g(X)\)</span>
+を渡して、全パターンを試してもらうこともできますが、それでは計算が減るどころか少し増えてしまいます。</p>
+<p>ここで使えるのが、sumcheck protocol
+です。検証者が全パターンを試すよりも少ないコストで、全てのパターンが
+<span class="math inline">\(0\)</span>
+であることを証明することができす。</p>
+<h2 id="サムチェックプロトコル">12. サムチェック・プロトコル。</h2>
+<p>いよいよ登場しました、sumcheck protocol です。
+仕組みを言葉で表現するならば、「変数が1つの多項式に分解し、それぞれが同じ多変数多項式がベースであることをランダムな点で検証してもらう。」です。</p>
+<p>多変数多項式とは、 <span class="math inline">\(f(x,y,z) = ax + by +
+cz\)</span> のような変数が複数ある式で、単変数多項式とは <span
+class="math inline">\(h(x) = ax + b\)</span>
+のような変数が一つだけの式の事です。では、なぜ変数ごとに式を分けると計算量が減るかを考えてみましょう。</p>
+<p>単純に考えると、3変数多項式なら、<span
+class="math inline">\(f\)</span>
+の中の3つの変数の評価を8パターンで試すので、<span
+class="math inline">\(3 \times 2^3 = 24\)</span>
+の計算が必要になります。
+一方で、3変数多項式を3つの単変数多項式に分解すると、変数を評価は同じく8パターンですが、式中の変数は1つだけなので、
+<span class="math inline">\(1 \times 2^3 = 8\)</span> となります。</p>
+<p>検証者の評価の回数を減らしつつ、適切に元の多変数多項式が分けられているのかを証明するのがこのsumcheck
+protocolの肝なのです。</p>
+<p>まず、単変数への変換方法を考えます。ここでは <span
+class="math inline">\(g(X)\)</span> を取り扱いたいので、ひとまず、 <span
+class="math inline">\(X = (x_1, x_2)\)</span> としておきます。
+検証者には次の3つの多項式と使用したランダムな3つの値 <span
+class="math inline">\(r1, \beta_1, \beta_2\)</span> を渡します。この
+<span class="math inline">\(r1\)</span>
+は検証者から最初にもらったり、改竄できない形で証明者が生成したりします。</p>
+<p><span class="math display">\[
+\begin{aligned}
+g(X) &amp;=  G(X) \cdot eq(X, (\beta_1, \beta_2)), \\
+g_1(x_1) &amp;= \sum_{y \in \{0,1\}}{g((x_1, y))}, \\
+g_2(x_2) &amp;= g((r_1, x_2)), \\
+\end{aligned}
+\]</span></p>
+<p>検証者は、<span class="math inline">\(g(X)\)</span>
+が全てのパターンで <span class="math inline">\(0\)</span> になることを
+<span class="math inline">\(g_1, g_2\)</span>
+を使って確かめていきます。まず、<span
+class="math inline">\(g_1(x)\)</span> を使って、<span
+class="math inline">\(G(X)\)</span> がどのパターンでも <span
+class="math inline">\(0\)</span>
+であるという主張を確かめます。この時点では <span
+class="math inline">\(g_1(x)\)</span> が　<span
+class="math inline">\(G(X)\)</span>
+を元に作られているかはまだ検証できていませんが、ひとまず <span
+class="math inline">\(G(X)\)</span>
+がゼロになりそうなことは分かりました。</p>
+<p><span class="math display">\[
+g_1(0) = g_1(1) = 0
+\]</span></p>
+<p>なので検証者は、本当に <span class="math inline">\(g_1(x)\)</span> が
+<span class="math inline">\(G(X)\)</span> の <span
+class="math inline">\(x_2\)</span> を <span
+class="math inline">\(0\)</span> と <span
+class="math inline">\(1\)</span>
+で評価した多項式であるかを確かめなければなりません。方針は、シュワルツ・ジッペルの補題
+を使って、ランダムな点で評価して同じ多項式は同じと見なせる、という性質を使います。つまり、<span
+class="math inline">\(g_1(x)\)</span> と <span
+class="math inline">\(G(X)\)</span> を <span
+class="math inline">\(x_1,x_2\)</span> を <span
+class="math inline">\(r_1,r_2\)</span>
+で評価してその結果を比べるということです。</p>
+<p>しかし、<span class="math inline">\(g_1(x)\)</span> の内部の <span
+class="math inline">\(x_2\)</span> はすでに <span
+class="math inline">\(0,1\)</span> で評価されてしまっているので、<span
+class="math inline">\(g_2(x)\)</span> を代わりに使います。まずは、<span
+class="math inline">\(g_1(x)\)</span> と <span
+class="math inline">\(g_2(x)\)</span>
+が同じ多項式であるかを確かめましょう。ちなみに、この時点で <span
+class="math inline">\(g_1, g_2\)</span> の内部で本当に <span
+class="math inline">\(g\)</span> が使われているか分からないので、<span
+class="math inline">\(g\)</span> の代わりに <span
+class="math inline">\(s, s&#39;\)</span> をおいておきます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+g_1(r_1) &amp;= g_2(0) + g_2(1) \\
+\\
+\sum_{y \in \{0,1\}}{s((r_1, y))} &amp;= s&#39;((r_1, 0)) + s&#39;((r_1,
+1))
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(g_1, g_2\)</span> がどうやら同じ多項式
+<span class="math inline">\(s\)</span>
+を元に作られたということは確かめられました。そして、<span
+class="math inline">\(g_2\)</span> を使うことで、<span
+class="math inline">\(G(X)\)</span>
+と同じ多項式であるかも確かめることができます。これには、 <span
+class="math inline">\(G\)</span> を <span class="math inline">\(r_1,
+r_2\)</span> で評価し、その結果を <span
+class="math inline">\(g_2\)</span> を <span
+class="math inline">\(r_2\)</span>
+で評価した結果と比べます。すると、<span
+class="math inline">\(g_2\)</span> の内部にある <span
+class="math inline">\(x_1\)</span> は既に <span
+class="math inline">\(r_1\)</span>
+で評価されているので、同じランダムな点で二つの多項式を評価し比較することができるのです。</p>
+<p><span class="math display">\[
+\begin{aligned}
+G((r_1, r_2))  &amp;= g_2(r_2) \\
+\\
+&amp;= s((r_1, r_2)) \\
+\end{aligned}
+\]</span></p>
+<p>二つが同じ値になるなら、<span class="math inline">\(g_1\)</span>
+の内部で使われている多項式 <span class="math inline">\(s\)</span> は
+<span class="math inline">\(G\)</span> と同じなので、<span
+class="math inline">\(g_1(0) = g_1(1) = 0\)</span>
+によって、全てのパターンで <span class="math inline">\(G\)</span>
+がゼロであることも検証できました。</p>
+<p>ここまでは <span class="math inline">\(X\)</span>
+の変数が2つでしたが、3つ以上の場合には</p>
+<p><span class="math display">\[
+\begin{aligned}
+g_2(r2) &amp;= g_3(0) + g_3(1), \\
+g_3(r3) &amp;=  g_4(0) + g_4(1), \\
+...
+\end{aligned}
+\]</span></p>
+<p>と検証しいき、<span class="math inline">\(G((r_1, r_2,.., r_n)) =
+g_n(r_n)\)</span> となることを確かめます。</p>
+<h2 id="ランダムな値をどうするか">13. ランダムな値をどうするか。</h2>
+<h2 id="渡された多項式が期待しているものか">14.
+渡された多項式が期待しているものか。</h2>
+<hr />
+<p>(*)
+重要な定理を導入すると、「非零多項式には根（ゼロ点）が多くない」を利用することができる。</p>
+</body>
+</html>
