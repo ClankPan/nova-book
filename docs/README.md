@@ -211,14 +211,14 @@ $$
 行列式のままでは、掛け算などの手順が複雑なので、これを一旦次のような式に変形します。 $\sum$ は $i$ を0からN-1まで順番にあげていき、その和を取る演算記号です。上の行列式の $0$ 行目の計算と一致していることがわかると思います。
 
 $$
-\sum_{i=0}^N{A[0,i] \cdot Z[i]} \quad \cdot \quad \sum_{i=0}^{N-1}{B[0,i] \cdot Z[i]} \quad = \quad \sum_{i=0}^N{C[0,i] \cdot Z[i]}
+\sum_{i=0}^{N-1}{A[0,i] \cdot Z[i]} \quad \cdot \quad \sum_{i=0}^{N-1}{B[0,i] \cdot Z[i]} \quad = \quad \sum_{i=0}^{N-1}{C[0,i] \cdot Z[i]}
 $$
 
 上の式では、$A[X,Y]$ でX行Y列の要素を取り出していますが、これは多項式の一部ではありません。なので、変数 $x$ によって同じように取り出せなくてはなりません。
 
 $$
 \begin{aligned}
-&f(x) = \sum_{i=0}^N{A(x,i) \cdot Z(i)} \quad \cdot \quad \sum_{i=0}^N{B(x,i) \cdot Z(i)} \quad - \quad \sum_{i=0}^N{C(x,i) \cdot Z(i)} = 0, \\
+&f(x) = \sum_{i=0}^{N-1}{A(x,i) \cdot Z(i)} \quad \cdot \quad \sum_{i=0}^{N-1}{B(x,i) \cdot Z(i)} \quad - \quad \sum_{i=0}^{N-1}{C(x,i) \cdot Z(i)} = 0, \\
 &\{x | 0 \le x \lt M \}
 \end{aligned}
 $$

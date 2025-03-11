@@ -265,9 +265,9 @@ class="math inline">\(i\)</span>
 <span class="math inline">\(0\)</span>
 行目の計算と一致していることがわかると思います。</p>
 <p><span class="math display">\[
-\sum_{i=0}^N{A[0,i] \cdot Z[i]} \quad \cdot \quad
-\sum_{i=0}^{N-1}{B[0,i] \cdot Z[i]} \quad = \quad \sum_{i=0}^N{C[0,i]
-\cdot Z[i]}
+\sum_{i=0}^{N-1}{A[0,i] \cdot Z[i]} \quad \cdot \quad
+\sum_{i=0}^{N-1}{B[0,i] \cdot Z[i]} \quad = \quad
+\sum_{i=0}^{N-1}{C[0,i] \cdot Z[i]}
 \]</span></p>
 <p>上の式では、<span class="math inline">\(A[X,Y]\)</span>
 でX行Y列の要素を取り出していますが、これは多項式の一部ではありません。なので、変数
@@ -275,9 +275,9 @@ class="math inline">\(i\)</span>
 によって同じように取り出せなくてはなりません。</p>
 <p><span class="math display">\[
 \begin{aligned}
-&amp;f(x) = \sum_{i=0}^N{A(x,i) \cdot Z(i)} \quad \cdot \quad
-\sum_{i=0}^N{B(x,i) \cdot Z(i)} \quad - \quad \sum_{i=0}^N{C(x,i) \cdot
-Z(i)} = 0, \\
+&amp;f(x) = \sum_{i=0}^{N-1}{A(x,i) \cdot Z(i)} \quad \cdot \quad
+\sum_{i=0}^{N-1}{B(x,i) \cdot Z(i)} \quad - \quad
+\sum_{i=0}^{N-1}{C(x,i) \cdot Z(i)} = 0, \\
 &amp;\{x | 0 \le x \lt M \}
 \end{aligned}
 \]</span></p>
