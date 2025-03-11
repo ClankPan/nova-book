@@ -9,7 +9,9 @@ use std::{
 };
 
 pub mod mle;
-// pub use mel::*;
+
+#[cfg(test)]
+pub mod fp101;
 
 fn main() {
     // MLE::eq("x",&bvec![0,1,1]);
@@ -313,7 +315,7 @@ pub fn satisfy_poly(x: Fr, coeffs: &[Fr]) -> bool {
 #[macro_export]
 macro_rules! fr {
     ($val:expr) => {
-        ark_test_curves::bls12_381::Fr::from($val)
+        Fr::from($val)
     };
 }
 

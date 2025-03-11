@@ -1,3 +1,7 @@
+---
+title: Nova Book
+---
+
 # Nova Book
 
 ## 1. 歴史的な背景について。
@@ -112,7 +116,6 @@ $$
 これは、先ほどのフィボナッチ数列の $a \times b = c$ のうち、$a$ のすべての項の集合になっていることがわかります。 $b,c$ についても、次のように変数を選び、その和をとります。ただし、フィボナッチ数列では $a$ 以外では和を取らないので、ただ変数を選択しただけになっています。
 
 $$
-
 \begin{aligned}
 B \cdot Z &=
 \begin{bmatrix}
@@ -165,7 +168,6 @@ e \\
 f \\
 \end{bmatrix} \\
 \end{aligned} \\
-
 $$
 
 最終的に、これを行列の式で表すと、次のようになります。 $\circ$ 記号は アダマール積（Hadamard Product）といって、重なり合う要素の掛け算だけをする演算記号です。普通の行列の掛け算は $\cdot$ 記号で表されます。
@@ -215,7 +217,8 @@ $$
 
 $$
 \begin{aligned}
-f(x) = \sum_{i=0}^N{A(x,i) \cdot Z(i)} \quad \cdot \quad \sum_{i=0}^N{B(x,i) \cdot Z(i)} \quad - \quad \sum_{i=0}^N{C(x,i) \cdot Z(i)} = 0, \quad \{x | 0 \le x \lt N \}
+&f(x) = \sum_{i=0}^N{A(x,i) \cdot Z(i)} \quad \cdot \quad \sum_{i=0}^N{B(x,i) \cdot Z(i)} \quad - \quad \sum_{i=0}^N{C(x,i) \cdot Z(i)} = 0, \\
+&\{x | 0 \le x \lt N \}
 \end{aligned}
 $$
 
@@ -228,7 +231,12 @@ $A(x,y)$ を作るにはどうしたらいいでしょうか？　まずは変�
 $[a,b,c,d,e,f,0,1]$ からn番目の要素を取り出すのは、先ほどの $\{0,1\}$ の行列で使ったテクニックを使います。つまり、取り出したい要素だけ1にして、それ以外は0にするという方法です。
 
 $$
-Z(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8) = (x_1 \cdot a) + (x_2 \cdot b) + (x_3 \cdot c) + (x_4 \cdot d) + (x_5 \cdot e) + (x_6 \cdot f) + (x_7 \cdot 0) + (x_8 \cdot 1)
+\begin{aligned}
+Z(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8) &= (x_1 \cdot a) + (x_2 \cdot b) \\
+&+ (x_3 \cdot c) + (x_4 \cdot d) \\
+&+ (x_5 \cdot e) + (x_6 \cdot f) \\
+&+ (x_7 \cdot 0) + (x_8 \cdot 1)
+\end{aligned}
 $$
 
 しかし、これでは変数の数が多い上に、2つ以上を選択してその合計値を取ってくることが出来てしまします。そこで、$Z$ への入力は $n$ を二進数で渡せるようにします。これだと、要素が8個ならば3つの変数だけでよく、さらに同時に1つの要素しか選択できません。
@@ -291,7 +299,9 @@ $eq$ をベースに作った多項式は嬉しい性質があるので、他と
 
 $$
 \begin{aligned}
-&G(X) = \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot \tilde{Z}(y) \quad \cdot \sum_{y\in \{0,1\}^{\log N}} \tilde{B}(X, y) \cdot \tilde{Z}(y) \quad - \sum_{y\in \{0,1\}^{\log N}} \tilde{C}(X, y) \cdot \tilde{Z}(y) = 0, \\
+G(X) &= \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot \tilde{Z}(y) 
+\cdot \sum_{y\in \{0,1\}^{\log N}} \tilde{B}(X, y) \cdot \tilde{Z}(y)
+- \sum_{y\in \{0,1\}^{\log N}} \tilde{C}(X, y) \cdot \tilde{Z}(y) \\
 \\
 &X \in \{0,1\}^{\log M}
 \end{aligned}
@@ -300,6 +310,7 @@ $$
 この $G$ は $X$ の全てのパターンで $G(X) = 0$ が成り立つはずです。もしどれか一つでも $0$ でなければ、それは不正な操作が行われ、 $a \times b = c$ のどこかが間違っているということになります。例えば、 $3 \times 2 = 5$ のような式が含まれているということです。
 
 行列の行数 $M = 4$ なら変数は2つで、次のようになります。
+
 $$
 G((0,0)) = G((0,1)) = G((1,0)) = G((1,1)) = 0
 $$
@@ -421,7 +432,7 @@ g_3(r3) &=  g_4(0) + g_4(1), \\
 \end{aligned}
 $$ 
 
-と検証していきます。
+と検証しいき、$G((r_1, r_2,.., r_n)) = g_n(r_n)$ となることを確かめます。
 
 ## 13. ランダムな値をどうするか。
 

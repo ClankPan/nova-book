@@ -1,9 +1,20 @@
 use ark_ff::{AdditiveGroup, Field};
-use ark_test_curves::bls12_381::Fr;
+// use ark_test_curves::bls12_381::Fr;
 
-use std::ops::{Add, AddAssign, Mul};
+
+
+use std::{
+    ops::{Add, AddAssign, Mul, MulAssign},
+    vec,
+};
 
 use crate::all_bit_patterns;
+
+
+#[cfg(not(test))]
+use ark_test_curves::bls12_381::Fr;
+#[cfg(test)]
+type Fr = crate::fp101::Fp101;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Term(Fr, Eq);
@@ -34,6 +45,9 @@ impl MLE {
 }
 
 fn vector_mle(vector: &[Fr], var: Var) -> Poly {
+    assert!(vector.len().is_power_of_two());
+    assert!(vector.len() > 1);
+
     let eq = match var {
         Var::X => Eq::x,
         Var::Y => Eq::y,
@@ -53,6 +67,11 @@ fn vector_mle(vector: &[Fr], var: Var) -> Poly {
 fn matrix_mle(matrix: &Vec<Vec<Fr>>) -> Poly {
     let m = matrix.len();
     let n = matrix[0].len();
+
+    assert!(m.is_power_of_two());
+    assert!(n.is_power_of_two());
+    assert!(m > 1);
+    assert!(n > 1);
 
     let mut mle = Poly::new();
     for (i, x_pattern) in all_bit_patterns(m).into_iter().enumerate() {
@@ -94,7 +113,7 @@ impl Poly {
 
     pub fn fin(self) -> Fr {
         let mut sum = Fr::ZERO;
-        assert!(self.sum.len() != 0);
+        assert!(!self.sum.is_empty());
         for (coeff, eq) in self.sum {
             assert!(eq.inners_x.is_none() & eq.inners_y.is_none()); // eqには係数しかないことを確認
             sum += coeff;
@@ -135,21 +154,25 @@ impl Poly {
                 for (vi, ei) in inner.into_iter().zip(evals) {
                     // 評価して係数へまめる、もしくはそのまま変数を残す。
                     if let Some(ei) = ei {
-                        coeff *= (Fr::ONE - vi) * (Fr::ONE - ei) + vi * ei;
+                        let res = (Fr::ONE - vi) * (Fr::ONE - ei) + vi * ei;
+                        // println!("vi: {}, ei: {}, res: {}\n", vi, ei, res);
+                        coeff *= res;
                     } else {
                         new_inner.push(vi);
                     }
                 }
-                if new_inner.len() != 0 {
+                if !new_inner.is_empty() {
                     new_inners.push(new_inner)
                 }
             }
+
+            // println!("coeff: {}\n", coeff);
 
             if coeff == Fr::ZERO {
                 continue;
             }
 
-            let new_inners = if new_inners.len() == 0 {
+            let new_inners = if new_inners.is_empty() {
                 None
             } else {
                 Some(new_inners)
@@ -223,19 +246,59 @@ impl Mul<Poly> for Poly {
 
     fn mul(self, rhs: Poly) -> Self::Output {
         let coeff = self.coeff * rhs.coeff;
-        let mut sum = vec![];
-        for (coeff_a, eq_a) in self.sum {
-            'inner: for (coeff_b, eq_b) in &rhs.sum {
-                let eq_ab = eq_a.clone() * eq_b.clone();
-                let coeff_ab = coeff_a * coeff_b;
-                if coeff_ab == Fr::ZERO {
-                    // coeffが0の時はsumから除外する。
-                    continue 'inner;
-                }
-                sum.push((coeff_ab, eq_ab))
+        let sum = match (self.sum.len(), rhs.sum.len()) {
+            (0,_)=> {
+                rhs.sum
             }
-        }
+            (_, 0) => {
+                self.sum
+            }
+            _ => {
+                let mut sum = vec![];
+                for (coeff_a, eq_a) in self.sum {
+                    'inner: for (coeff_b, eq_b) in &rhs.sum {
+                        let eq_ab = eq_a.clone() * eq_b.clone();
+                        let coeff_ab = coeff_a * coeff_b;
+                        if coeff_ab == Fr::ZERO {
+                            // coeffが0の時はsumから除外する。
+                            continue 'inner;
+                        }
+                        sum.push((coeff_ab, eq_ab))
+                    }
+                }
+                sum
+            }
+        };
         Self { coeff, sum }
+    }
+}
+
+// Poly *= Poly
+impl MulAssign for Poly {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.coeff = self.coeff * rhs.coeff;
+        self.sum = match (self.sum.len(), rhs.sum.len()) {
+            (0,_)=> {
+                rhs.sum
+            }
+            (_, 0) => {
+                return;
+            }
+            _ => {
+                let mut sum = vec![];
+                for (coeff_a, eq_a) in &self.sum {
+                    'inner: for (coeff_b, eq_b) in &rhs.sum {
+                        let eq_ab = eq_a.clone() * eq_b.clone();
+                        let coeff_ab = coeff_a * coeff_b;
+                        if coeff_ab == Fr::ZERO {
+                            continue 'inner;
+                        }
+                        sum.push((coeff_ab, eq_ab))
+                    }
+                }
+                sum
+            }
+        };
     }
 }
 
@@ -260,7 +323,7 @@ impl Add<Poly> for Poly {
         }
     }
 }
-
+// Poly += Poly
 impl AddAssign for Poly {
     fn add_assign(&mut self, rhs: Self) {
         for (coeff, _) in &mut self.sum {
@@ -274,6 +337,7 @@ impl AddAssign for Poly {
         self.coeff = Fr::ONE;
     }
 }
+
 
 type Vi = Vec<Fr>;
 #[derive(PartialEq, Debug, Clone)]
@@ -304,14 +368,13 @@ impl Mul<Eq> for Eq {
 
     fn mul(self, rhs: Eq) -> Self::Output {
         fn merge_inner(inner_a: Option<Vec<Vi>>, inner_b: Option<Vec<Vi>>) -> Option<Vec<Vi>> {
-            let inner = match (inner_a, inner_b) {
+            match (inner_a, inner_b) {
                 (None, None) => None,
                 (None, Some(inner)) => Some(inner),
                 (Some(inner), None) => Some(inner),
                 // todo: 同じやつはまとめてもいいかも。
-                (Some(a), Some(b)) => Some(a.into_iter().chain(b.into_iter()).collect()),
-            };
-            inner
+                (Some(a), Some(b)) => Some(a.into_iter().chain(b).collect()),
+            }
         }
 
         let inners_x = merge_inner(self.inners_x, rhs.inners_x);
@@ -348,6 +411,7 @@ impl Mul<Eq> for Fr {
 
 #[cfg(test)]
 pub mod tests {
+
     use crate::{bvec, fr, frmatrix, frvec};
 
     use super::*;
@@ -477,20 +541,63 @@ pub mod tests {
     }
 
     #[test]
-    fn check_sumcheck() {
-        let m1_mle = MLE::matrix(&frmatrix!(
+    fn check_fr_mul_poly() {
+        let poly = fr!(11) * Poly::new();
+        assert_eq!(fr!(11), poly.coeff);
+    }
+
+    #[test]
+    fn check_non_binary_eval() {
+        let r2 = fr!(84);
+        let r1 = fr!(31);
+
+        let mle = MLE::vec_x(&frvec![1, 1]);
+        let res = mle.eval_x(&vec![Some(r1)]);
+        assert_eq!(res.fin(), fr!(1-84)+fr!(84));
+
+
+        let mle = MLE::vec_x(&frvec![1, 1, 0, 0]);
+        println!("{:?}", mle);
+        let mle = mle.eval_x(&vec![Some(r1), None]);
+        println!("{:?}", mle);
+        let mle = mle.eval_x(&vec![Some(r2)]);
+        println!("{:?}", mle);
+        assert_eq!(mle.fin(), fr!(-83));
+    }
+
+    #[test]
+    fn check_t1() {
+
+        let r1 = fr!(23);
+        let r2 = fr!(48);
+
+        let m1 = MLE::matrix(&frmatrix!(
             [1, 1, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0],
             [0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
         ));
-        let m2_mle = MLE::matrix(&frmatrix!(
+        let z1 = MLE::vec_y(&frvec![0, 1, 1, 2, 3, 6, 6, 1]);
+        let t1 = (m1.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).sum(8, &Var::Y);
+
+        assert_eq!(fr!(17), t1.fin())
+    }
+
+    #[test]
+    fn check_sumcheck() {
+        let m1 = MLE::matrix(&frmatrix!(
+            [1, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ));
+        let m2 = MLE::matrix(&frmatrix!(
             [0, 0, 0, 0, 0, 0, 0, 1],
             [0, 0, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
         ));
-        let m3_mle = MLE::matrix(&frmatrix!(
+        let m3 = MLE::matrix(&frmatrix!(
             [0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, 1, 0],
@@ -500,46 +607,138 @@ pub mod tests {
         let m = 4;
         let n = 8;
 
-        let z1_mle = MLE::vec_y(&frvec![0, 1, 1, 2, 3, 6, 6, 1]);
+        let z1 = MLE::vec_y(&frvec![0, 1, 1, 2, 3, 6, 6, 1]);
 
-        let m1z1 = m1_mle * z1_mle.clone();
-        let m2z1 = m2_mle * z1_mle.clone();
-        let m3z1 = m3_mle * z1_mle.clone();
+        let m1z1 = m1.clone() * z1.clone();
+        let m2z1 = m2.clone() * z1.clone();
+        let m3z1 = m3.clone() * z1.clone();
 
-        let g = m1z1.sum(n, &Var::Y) * m2z1.sum(n, &Var::Y) + fr!(-1) * m3z1.sum(n, &Var::Y);
+        // println!("m1z1: {:?}\n", m1z1);
+        // println!("m2z1: {:?}\n", m2z1);
+        // println!("m3z1: {:?}\n", m3z1);
 
-        let beta = frvec![57, 23]; // 本来は乱数。
+        let sum_m1z1 = m1z1.clone().sum(n, &Var::Y);
+        let sum_m2z1 = m2z1.clone().sum(n, &Var::Y);
+        let sum_m3z1 = m3z1.clone().sum(n, &Var::Y);
+
+        // println!("sum_m1z1: {:?}\n", sum_m1z1);
+        // println!("sum_m2z1: {:?}\n", sum_m2z1);
+        // println!("sum_m3z1: {:?}\n", sum_m3z1);
+
+        let g = sum_m1z1 * sum_m2z1 + fr!(-1) * sum_m3z1;
+
+
+
+        // 本来は乱数。
+        let alpha = fr!(57); 
+        let beta = frvec![9, 61];
+        let r1 = fr!(23);
+        let r2 = fr!(48);
+        let r11 = fr!(25);
+        let r22 = fr!(50);
+        let r33 = fr!(49);
+
         let q = g.clone() * Eq::x(&beta); // Eq::x(&beta)はbetaが{0,1}でないなら高確率で0以外になるので、gがどの値でも0になることを確認できる。
-
+        // println!("g: {:?}\n", g);
+        // println!("eq: {:?}\n", Eq::x(&beta));
         let sum_q = q.clone().sum(m, &Var::X).fin();
         assert_eq!(sum_q, Fr::ZERO);
 
-        // Outer-sumcheck
+        /*-- Outer-sumcheck --*/
 
         /* Round 1 */
         // Prover
         let q1 = q.clone().eval_x(&vec![None, Some(Fr::ONE)]); // Proverが用意する。
         let s1 = q1.clone(); // Verifierに渡す。
-                             // Verifier
+        //  Verifier
         let sum_s1 = (s1.clone().eval_x(&vec![Some(Fr::ZERO)])
             + s1.clone().eval_x(&vec![Some(Fr::ONE)]))
         .fin();
         assert_eq!(sum_s1, Fr::ZERO);
-        let r1 = fr!(84); // 本来は乱数。
 
         /* Round 2 */
         // Prover
         let q2 = q.clone().eval_x(&vec![Some(r1), None]);
         let s2 = q2.clone(); // Verifierに渡す。
-                             // Verifier
+        // Verifier
         let r1_s1 = s1.clone().eval_x(&vec![Some(r1)]).fin();
         let sum_s2 = (s2.clone().eval_x(&vec![Some(Fr::ZERO)])
             + s2.clone().eval_x(&vec![Some(Fr::ONE)]))
         .fin();
-        println!("{:?} {:?}", r1_s1, sum_s2);
+        // println!("{:?} {:?}", r1_s1, sum_s2);
         assert_eq!(r1_s1, sum_s2);
         assert!(r1_s1 != Fr::ZERO);
-        let r2 = fr!(31); // 本来は乱数。
         let _r2_q2 = s2.clone().eval_x(&vec![Some(r2)]).fin();
+
+        /*-- Batchin inner-sumcheck --*/
+        let t1 = (m1.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).sum(n, &Var::Y);
+        let t2 = (m2.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).sum(n, &Var::Y);
+        let t3 = (m3.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).sum(n, &Var::Y);
+
+        assert_eq!(fr!(17), t1.clone().fin());
+        assert_eq!(fr!(11), t2.clone().fin());
+        assert_eq!(fr!(29), t3.clone().fin());
+
+        let t = t1 + alpha * t2 + alpha * alpha * t3;
+        assert_eq!(fr!(26), t.clone().fin());
+
+        /* Round 1 */
+        // Prover
+        let mut f1 = Poly::new();
+        for pattern in all_bit_patterns(4) {
+            f1 += (m1.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![None, Some(fr!(pattern[0])), Some(fr!(pattern[1]))]);
+        }
+        for pattern in all_bit_patterns(4) {
+            f1 += alpha * (m2.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![None, Some(fr!(pattern[0])), Some(fr!(pattern[1]))]);
+        }
+        let alpha_pow2 = alpha * alpha;
+        for pattern in all_bit_patterns(4) {
+            f1 += alpha_pow2 * (m3.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![None, Some(fr!(pattern[0])), Some(fr!(pattern[1]))]);
+        }
+        let q1 = f1;
+        // Verifier
+        let sum_q1 = q1.clone().eval_y(&vec![Some(Fr::ZERO)]) + q1.clone().eval_y(&vec![Some(Fr::ONE)]);
+        assert_eq!(t.fin(), sum_q1.fin());
+
+        /* Round 2 */
+        // Prover
+        let mut f2 = Poly::new();
+        for pattern in all_bit_patterns(2) {
+            f2 += (m1.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![Some(r11), None, Some(fr!(pattern[0]))]);
+        }
+        for pattern in all_bit_patterns(2) {
+            f2 += alpha * (m2.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![Some(r11), None, Some(fr!(pattern[0]))]);
+        }
+        let alpha_pow2 = alpha * alpha;
+        for pattern in all_bit_patterns(2) {
+            f2 += alpha_pow2 * (m3.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![Some(r11), None, Some(fr!(pattern[0]))]);
+        }
+        let q2 = f2;
+        // Verifier
+        let sum_q2 = q2.clone().eval_y(&vec![Some(Fr::ZERO)]) + q2.clone().eval_y(&vec![Some(Fr::ONE)]);
+        let r11_q1 = q1.eval_y(&vec![Some(r11)]);
+        assert_eq!(r11_q1.fin(), sum_q2.fin());
+        
+        /* Round 3 */
+        // Prover
+        let mut f3 = Poly::new();
+        f3 += (m1.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![Some(r11), Some(r22), None]);
+        f3 += alpha * (m2.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![Some(r11), Some(r22), None]);
+        f3 += alpha_pow2 * (m3.clone().eval_x(&vec![Some(r1), Some(r2)]) * z1.clone()).eval_y(&vec![Some(r11), Some(r22), None]);
+        let q3 = f3;
+        // Verifier
+        let sum_q3 = q3.clone().eval_y(&vec![Some(Fr::ZERO)]) + q3.clone().eval_y(&vec![Some(Fr::ONE)]);
+        let r22_q2 = q2.eval_y(&vec![Some(r22)]);
+        assert_eq!(r22_q2.fin(), sum_q3.fin());
+
+        let r_t = m1z1.eval_x(&vec![Some(r1), Some(r2)]).eval_y(&vec![Some(r11), Some(r22), Some(r33)])
+            + alpha * m2z1.eval_x(&vec![Some(r1), Some(r2)]).eval_y(&vec![Some(r11), Some(r22), Some(r33)])
+            + alpha_pow2 * m3z1.eval_x(&vec![Some(r1), Some(r2)]).eval_y(&vec![Some(r11), Some(r22), Some(r33)]);
+        let r33_q3 = q3.eval_y(&vec![Some(r33)]);
+        assert_eq!(r33_q3.fin(), r_t.fin());
+
+        /*-- Final check --*/
+
+
     }
 }
