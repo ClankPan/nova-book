@@ -6,7 +6,7 @@ html {
 }
 body {
   margin: 0 auto;
-  max-width: 42em;
+  max-width: 46em;
   padding-left: 50px;
   padding-right: 50px;
   padding-top: 50px;
@@ -16,10 +16,10 @@ body {
   text-rendering: optimizeLegibility;
   font-kerning: normal;
   font-family: "BIZ UDGothic", sans-serif;
-  font-size: 16px;
+  /* font-size: 16px; */
   letter-spacing: 0.05em;
   line-height: 1.7;
-  color: #222;
+  color: #333;
   background: #fefefe;
 }
 @media (max-width: 600px) {
@@ -67,6 +67,10 @@ svg {
 h1, h2, h3, h4, h5, h6 {
   margin-top: 1.4em;
 }
+h1 {
+  font-size: 2.5em;
+  font-weight: bold;
+}
 h5, h6 {
   font-size: 1em;
   font-style: italic;
@@ -89,13 +93,19 @@ blockquote {
 }
 code {
   font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
-  font-size: 85%;
-  margin: 0;
+  /* font-size: 85%; */
+  margin: 0 0.2em; /* 上下=0, 左右=0.2em */
   hyphens: manual;
+  
 }
 pre {
   margin: 1em 0;
   overflow: auto;
+
+  border: 1px solid #ddd;   /* 枠線 */
+  padding: 0.6em;          /* ボックス内の余白 */
+  background-color: #f9f9f9; /* 薄いグレー系の背景色 */
+  border-radius: 4px;        /* 角丸 */
 }
 pre code {
   padding: 0;
@@ -141,6 +151,7 @@ header {
 }
 #TOC li {
   list-style: none;
+  line-height: 2.5;
 }
 #TOC ul {
   padding-left: 1.3em;
@@ -149,6 +160,10 @@ header {
   padding-left: 0;
 }
 #TOC a:not(:hover) {
+  text-decoration: none;
+}
+#TOC a {
+  color: #0366d6;
   text-decoration: none;
 }
 code{white-space: pre-wrap;}
@@ -164,4 +179,21 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1.6em;
   vertical-align: middle;
+}
+.note {
+  overflow-y: auto;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 1em;
+  padding: .5em 1em;
+  margin-top: 3em;
+}
+
+.todo {
+  overflow-y: auto;
+  background: #fa905f;
+  border: 1px solid #e0e0e0;
+  border-radius: 1em;
+  padding: .5em 1em;
+  margin-top: 3em;
 }
