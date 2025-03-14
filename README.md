@@ -7,6 +7,10 @@ date: 2025-03-12
 css:
 - ./style.css
 - docs/style.css
+
+header-includes:
+  - '<link rel="icon" type="image/png" href="./favicon.webp" />'
+  - '<link rel="icon" type="image/png" href="docs/favicon.webp" />'
 ---
 
 <br>
