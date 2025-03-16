@@ -78,8 +78,8 @@ id="toc-変数の切り替え">変数の切り替え</a></li>
 <ul>
 <li><a href="#全ての合計を求める演算記号"
 id="toc-全ての合計を求める演算記号">全ての合計を求める演算記号</a></li>
-<li><a href="#行列の積を表せる"
-id="toc-行列の積を表せる">行列の積を表せる</a></li>
+<li><a href="#行列の積を多項式で表現"
+id="toc-行列の積を多項式で表現">行列の積を多項式で表現</a></li>
 <li><a href="#要素を取り出す多項式"
 id="toc-要素を取り出す多項式">要素を取り出す多項式</a></li>
 <li><a href="#行列の積を表す多項式"
@@ -95,7 +95,14 @@ id="toc-ここまでの見取り図">ここまでの見取り図</a></li>
 <ul>
 <li><a href="#サムチェック" id="toc-サムチェック">サムチェック</a></li>
 <li><a href="#多項式コミットメント"
-id="toc-多項式コミットメント">多項式コミットメント</a></li>
+id="toc-多項式コミットメント">多項式コミットメント</a>
+<ul>
+<li><a href="#式変形" id="toc-式変形">式変形</a></li>
+<li><a href="#離散対数性" id="toc-離散対数性">離散対数性</a></li>
+<li><a href="#検証" id="toc-検証">検証</a></li>
+<li><a href="#コミットメント"
+id="toc-コミットメント">コミットメント</a></li>
+</ul></li>
 <li><a href="#ランダムオラクル"
 id="toc-ランダムオラクル">ランダム・オラクル</a></li>
 <li><a href="#ここまでの見取り図-1"
@@ -110,18 +117,18 @@ id="toc-計算の畳み込み">計算の畳み込み</a></li>
 <h1 id="はじめに">はじめに</h1>
 <p><em>このオンラインブックは執筆中です。完成版ではありません。<a
 href="https://docs.google.com/forms/d/e/1FAIpQLSd5NN8awATTEVN4kI_itnnJRNdEEgkoEnRFLuUaoxmLBgJZZQ/viewform?usp=header">フィードバック</a>
-はこちらからお願いいたします。2025年6月までの完成を目指しています</em></p>
-<p>本書では、アセンブリ言語にコンパイルされたプログラムの実行を証明する仮想マシン、つまりzkVMを作成を通して、ゼロ知識証明について学びます。実装にはパラダイムがありますが、その中でも比較的理解しやすいものを選びました。本書だけではzkVMの全てを知ることはできませんが、ここで得られた知識はゼロ知識証明の世界に飛び込む読者の足がかりになるはずです。一見、難しそうに見える数式やコードが出てきますが、全てステップ・バイ・ステップで説明してきますので、分からないと感じたらぜひ前の章に戻って見てください。</p>
-<p>この本では、理論と実装のパートが分かれています。もし、理論の途中でわからなくなってしまったら、上からもう一度読み直して、理解できるところまで実装してみてください。手を動かしてみると、より理解が深まってその先へと進めると思います。また、この時代はChatGPTのようなLLMに質問することも理解の手助けになると思いますので、ぜひ活用してみてください。</p>
+はこちらからお願いいたします。2025年6月の完成を目指しています。</em></p>
+<p>本書では、アセンブリ言語にコンパイルされたプログラムの実行を証明する仮想マシン、つまりzkVMを作成を通して、ゼロ知識証明について学びます。実装にはパラダイムがありますが、その中でも比較的理解しやすいものを選びました。本書だけではzkVMの全てを知ることはできませんが、ここで得られた知識はゼロ知識証明の世界に飛び込む読者の足がかりになるはずです。一見、難しそうに見える数式やコードが出てきますが、全てステップ・バイ・ステップで説明していきます。分からないと感じたらぜひ前の章に戻ってみてください。</p>
+<p>この本では、理論と実装のパートが分かれています。もし、理論の途中でわからなくなってしまったら、再度上から読み直して、理解できるところまで実装してみてください。手を動かしてみると、より理解が深まってその先へと進めると思います。また、この時代はChatGPTのようなLLMに質問することも理解の手助けになると思いますので、ぜひ活用してみてください。</p>
 <p>この本の読者は数学やプログラムが得意である必要はなく、むしろパズルの解き方を時間をかけて理解できれば十分です。また、本書の理解には必要ないが重要な概念や補足、こぼれ話はコラムとしてまとめていきますので、身構えず気楽に読み進めてください。</p>
 <h3 id="なぜzkvmなのか">なぜzkVMなのか</h3>
-<p>ゼロ知識証明を知るのに、なぜzkVMを題材に選んだのでしょうか？これは、ここ最近のゼロ知識証明の研究の多くが、どうzkVMを作るかに向かっているからです。そもそもVMとはVirtual
+<p>ゼロ知識証明を知るのに、なぜzkVMを題材に選んだのでしょうか？これは、近年のゼロ知識証明の研究が、どのようにzkVMを作るかという方向で活発化しているからです。そもそもVMとはVirtual
 Machineのことで、仮想機械、つまりプログラム上でCPUなどのハードウェアをシミュレートし、さらにその上でプログラムを動かすという階層高構造になる仕組みのことです。ゼロ知識証明では複雑な計算を証明したいわけですが、基本的には証明のプロトコルによって書き方が異なります。</p>
 <p>計算そのものをどう分かりやすく表現するかが問題になりますが、これにはいくつか方法があります。一つは専用の言語を作ってその言語でプログラムを直接書くことです。しかし、プログラマは既存のプログラムを専用言語でいちいち書き直したくないですし、ツールによって言語を使い分けることも認知的なコストが高くなりがちです。</p>
 <p>一般的なプログラミング言語を専用言語に変換する、といった方法もありますが、プログラミング言語もバージョンによって書き方が微妙に異なりますし、全てに対して専用のコンパイラを用意するのもコストに見合うかわかりません。</p>
 <p>そこで、既存のどのプログラミング言語からもコンパイルできて、変更が滅多に行われない言語、つまりアセンブリ言語そのものを証明してしまおう、ということです。アセンブリ言語で書かれた計算を証明するには、CPUそのもの挙動をゼロ知識証明のフォーマットで一度だけ定義し、どんなプログラムに対しても同じゼロ知識証明の回路を使い回せばいいのです。すると、プログラマも普段の業務と同じように好きな言語でプログラムを書き、自然とその計算が証明されるわけです。</p>
 <h3 id="zkvmのパラダイム">zkVMのパラダイム</h3>
-<p>zkVMはあくまでも「やりたいこと」であって、実際にどのような実装かを指す言葉ではありません。実装にはいくつかのパラダイムがあります。一つはプログラムの実行を一つの大きな証明回路にして一度に証明しまう方式です。もう一つはプログラムの実行を小さなステップに分けて証明回路を繰り返し適用することで再帰的に証明する方式です。</p>
+<p>zkVMはあくまでも「やりたいこと」であって、実際にどのような実装かを指す言葉ではありません。実装にはいくつかのパラダイムがあります。一つはプログラムの実行を一つの大きな証明回路にして、一度に証明しまう方式です。もう一つはプログラムの実行を小さなステップに分けて証明回路を繰り返し適用することで再帰的に証明する方式です。</p>
 <p>前者をモノリシック（Monorithic）方式といい、後者をリカーシブ（Recursive）方式といいます。Monorithicで代表的なものはJolt/Lasso方式ですが、入門には難しすぎるので、比較的わかりやすいRecursiveのNova方式を本書では採用します。さらに、Novaの中でもわかりやすく今後の発展の基本となりそうなHyperNovaをベースに解説していきます。とくに、HyperNovaで使われる技術はJoltでも使われるものが多く、学ぶと他にも応用が効きます。</p>
 <div class="note">
 <p>コラム: ゼロ知識証明の回路</p>
@@ -283,7 +290,7 @@ c \times x &amp;= \gamma \\
 <p>浮動小数点数やビット演算などの表現が難しいものは、別の技術を使ってカバーします。</p>
 <div class="note">
 <p>コラム: ルックアップ</p>
-<p>ビット演算だどの論理演算を、このような代数演算的な表現に落とし込むのはとても大変です。たとえば、変数が
+<p>ビット演算などの論理演算を、このような代数演算的な表現に落とし込むのはとても大変です。たとえば、変数が
 <span class="math inline">\(0,1\)</span>
 のどちらかであることを制約する式を考えてみましょう。次の式が成り立つのは
 <span class="math inline">\(x\)</span> が <span
@@ -576,7 +583,7 @@ class="math inline">\(i\)</span>
 \]</span></p>
 <p>このように、 <span class="math inline">\(\sum\)</span>
 は、変化させたい変数とその範囲を指定し、右に書かれた式を評価した合計をとります。</p>
-<h3 id="行列の積を表せる">行列の積を表せる</h3>
+<h3 id="行列の積を多項式で表現">行列の積を多項式で表現</h3>
 <p>行列の積は、要素の積の合計ですので、先ほどの式は <span
 class="math inline">\(0\)</span>
 行目の計算と一致していることがわかると思います。</p>
@@ -588,7 +595,7 @@ class="math inline">\(0\)</span>
 \begin{aligned}
 &amp;f(x) = \sum_{i=0}^{N-1}{A(x,i) \cdot Z(i)} \quad \cdot \quad
 \sum_{i=0}^{N-1}{B(x,i) \cdot Z(i)} \quad - \quad
-\sum_{i=0}^{N-1}{C(x,i) \cdot Z(i)} = 0, \\
+\sum_{i=0}^{N-1}{C(x,i) \cdot Z(i)}, \\
 &amp;\{x | 0 \le x \lt M \}
 \end{aligned}
 \]</span></p>
@@ -800,7 +807,7 @@ g(X) =  G(X) \cdot eq(X, \beta)
 <p>いよいよ登場しました、Sumcheck Protocol です。
 仕組みを言葉で表現するならば、「変数が1つの多項式に分解し、それぞれが同じ多変数多項式がベースであることをランダムな点で検証してもらう。」です。</p>
 <p>多変数多項式とは、 <span class="math inline">\(f(x,y,z) = ax + by +
-cz\)</span> のような変数が複数ある式で、単変数多項式とは <span
+cz\)</span> のような変数が複数ある式で、1変数多項式とは <span
 class="math inline">\(h(x) = ax + b\)</span>
 のような変数が一つだけの式の事です。では、なぜ変数ごとに式を分けると計算量が減るかを考えてみましょう。</p>
 <p>単純に考えると、3変数多項式なら、<span
@@ -808,7 +815,7 @@ class="math inline">\(f\)</span>
 の中の3つの変数の評価を8パターンで試すので、<span
 class="math inline">\(3 \times 2^3 = 24\)</span>
 の計算が必要になります。
-一方で、3変数多項式を3つの単変数多項式に分解すると、変数を評価は同じく8パターンですが、式中の変数は1つだけなので、
+一方で、3変数多項式を3つの1変数多項式に分解すると、変数を評価は同じく8パターンですが、式中の変数は1つだけなので、
 <span class="math inline">\(1 \times 2^3 = 8\)</span> となります。</p>
 <p>Sumcheck Protocol では1つの式ごとに3回の評価が必要なだけなので、
 <span class="math inline">\(O(N)\)</span>
@@ -821,7 +828,7 @@ Sumcheck Protocolの肝なのです。</p>
 <p><em>執筆中:　馴染みのない用語 protocol</em></p>
 </div>
 <h2 id="サムチェック">サムチェック</h2>
-<p>ではまず、多変数から単変数への変換方法を考えます。ここでは <span
+<p>ではまず、多変数から1変数への変換方法を考えます。ここでは <span
 class="math inline">\(g(X)\)</span> を取り扱いたいので、ひとまず、 <span
 class="math inline">\(X = (x_1, x_2)\)</span> としておきます。
 検証者には次の3つの多項式と使用したランダムな3つの値 <span
@@ -831,11 +838,13 @@ class="math inline">\(r1, \beta_1, \beta_2\)</span> を渡します。この
 <p><span class="math display">\[
 \left\{
 \begin{aligned}
-\quad g(X) &amp;=  G(X) \cdot eq(X, (\beta_1, \beta_2)), \\
+\quad &amp;g((x_1, x_2)) =  G(X) \cdot eq((x_1, x_2), (\beta_1,
+\beta_2)), \\
 \\
-\quad g_1(x_1) &amp;= \sum_{y \in \{0,1\}}{g((x_1, y))}, \\
+\quad &amp;g_1(x_1) = \sum_{y \in \{0,1\}}{g((x_1, y))} = g((x_1, 0)) +
+g((x_1, 1)), \\
 \\
-\quad g_2(x_2) &amp;= g((r_1, x_2)), \\
+\quad &amp;g_2(x_2) = g((r_1, x_2)), \\
 \end{aligned}
 \right.
 \]</span></p>
@@ -926,13 +935,181 @@ g_3(r3) &amp;=  g_4(0) + g_4(1), \\
 <p>と検証しいき、<span class="math inline">\(G((r_1, r_2,.., r_n)) =
 g_n(r_n)\)</span> となることを確かめます。</p>
 <h2 id="多項式コミットメント">多項式コミットメント</h2>
-<p><em>執筆中</em></p>
+<p>1変数多項式とシュワルツ・ジッペルの補題によって、少ない計算回数によって合計が計算できることが分かりました。しかし、多項式コミットメントを使うと、これよりもまだ検証者の計算を減らすことができます。今の状態では、検証者は証明者から
+<span class="math inline">\(g_1,g_2,...\)</span>
+を受け取って、それぞれを乱数 <span class="math inline">\(r_i\)</span>
+で評価しなければなりません。多項式コミットメントは、この操作を減らすことができるのです。具体的には、証明者が計算した
+<span class="math inline">\(v_i\)</span> が <span
+class="math inline">\(g_i(r_i)\)</span> を、 <span
+class="math inline">\(g_i\)</span>
+をほとんど知らなくても検証できるのです。</p>
+<p>目指すところは、多項式 <span class="math inline">\(P(x)\)</span> を
+<span class="math inline">\(a\)</span> で評価した結果が <span
+class="math inline">\(b\)</span> 、つまり、 <span
+class="math inline">\(P(a) = b\)</span> を <span
+class="math inline">\(x\)</span>
+が残る形で式変形して、二つの多項式が一致するかをランダムな点での評価（シュワルツ・ジッペルの補題）で確かめる方向です。</p>
+<h3 id="式変形">式変形</h3>
+<p>まずは、式変形した結果をお見せします。この式の意味は、「<span
+class="math inline">\(P(x) - b = 0\)</span> という式は <span
+class="math inline">\((x-a)\)</span> で割り切れ、その時の商は <span
+class="math inline">\(Q(x)\)</span> である」となります。</p>
+<p><span class="math display">\[
+P(x) - b = Q(x)(x-a)
+\]</span></p>
+<p>この法則は、因数定理といいます。要は、「<span
+class="math inline">\(f(a) = 0\)</span> ならば、 <span
+class="math inline">\(f(x)\)</span> は <span
+class="math inline">\((x-a)\)</span>
+で必ず割り切れる」のです。この定理によって、<span
+class="math inline">\(x\)</span> を残したまま <span
+class="math inline">\(a,b\)</span>
+を式の中に入れることができました。</p>
+<p>では、実際に計算してみましょう。下の <span
+class="math inline">\(f(x)\)</span> は <span
+class="math inline">\(x\)</span> が <span
+class="math inline">\(3\)</span> のときにゼロになるので、 <span
+class="math inline">\((x-3)\)</span> で割り切れるはずです。</p>
+<p><span class="math display">\[
+f(x) = x^3 - 12x^2 + 47x - 60
+\]</span></p>
+<p><span class="math display">\[
+\require{enclose}
+\begin{align}
+    x^2- 9x + 20 \phantom{{} + 0 + 00}\\
+    x-3 \hspace{0.5em} \enclose{longdiv}{ \phantom{0} x^3 - 12x^2 + 47x
+- 60 } \\
+    {\underline{x^3 - 3x^2} \phantom{{} 0 + 47x - 60}} \\
+  -9x^2   +   47x \phantom{{} + 00}\\
+  \underline{-9x^2   +   27x} \phantom{{} + 00} \\
+  20x   -   60 \\
+    \underline{20x   -   60 } \\
+    0
+\end{align}
+\]</span></p>
+<p>左辺（ <span class="math inline">\(P(x) - b\)</span> ）と右辺（ <span
+class="math inline">\(Q(x)(x-a)\)</span> ）を同じ <span
+class="math inline">\(x\)</span> で評価した時に一致すれば、<span
+class="math inline">\(P(a) = b\)</span>
+であることも確かめられるのです。</p>
+<div class="note">
+<p>コラム: 因数定理</p>
+<p><em>執筆中: 根と因数</em></p>
+</div>
+<h3 id="離散対数性">離散対数性</h3>
+<p><span class="math inline">\(P(x)\)</span> と <span
+class="math inline">\(Q(x)\)</span> をランダムな <span
+class="math inline">\(s\)</span>
+で評価した結果を証明者からもらうことで、検証者は <span
+class="math inline">\(P_s - b = Q_s(s-a)\)</span>
+を確かめるだけで良くなります。</p>
+<p>しかし、ここで起きる問題は、証明者が事前に <span
+class="math inline">\(s\)</span> を知っていれば、<span
+class="math inline">\(a,b\)</span> に全く関係ない <span
+class="math inline">\(P(x), Q(x)\)</span>
+をいくらでも作れてしまうということです。またそもそも、 <span
+class="math inline">\(P_s,Q_s\)</span>
+を値として受け取ったところで、それが本当に <span
+class="math inline">\(P(s), Q(s)\)</span>
+を計算した結果なのかもよく分かりません。</p>
+<p>さて、ここから一気に複雑になりますので、頑張ってついてきてください。</p>
+<p>まずは、次のような性質を持つ <span
+class="math inline">\(h(x)\)</span> を導入します。例えば、 <span
+class="math inline">\(h\)</span> に <span
+class="math inline">\(3+5\)</span> を入れた結果も <span
+class="math inline">\(h(3)\)</span> と <span
+class="math inline">\(h(5)\)</span>
+を足した結果も同じという性質です。</p>
+<p><span class="math display">\[
+\begin{aligned}
+h(a+b) &amp;= h(a) + h(b), \\
+\\
+h(ab) &amp;= a \cdot h(b), \\
+\end{aligned}
+\]</span></p>
+<p>これを利用すると、先ほど例に出した <span
+class="math inline">\(f(s)\)</span>
+はこんな感じに変形することができるは分かるでしょうか。</p>
+<p><span class="math display">\[
+\begin{aligned}
+h(f(s)) = 1 \cdot h(s^3) -12 \cdot h(s^2) + 47 \cdot h(s) -60 \cdot
+h(s^0)
+\end{aligned}
+\]</span></p>
+<p>ここで、<span class="math inline">\(h(x)\)</span>
+に重要な性質を追加します。それは、<span
+class="math inline">\(h(s)\)</span> の結果 <span
+class="math inline">\(h_s\)</span> からは <span
+class="math inline">\(h(x)\)</span> の入力となった <span
+class="math inline">\(s\)</span>
+は分からないという性質です。これはハッシュ関数にとても似ています。</p>
+<p>よって、　<span class="math inline">\(h_{s^0},..,h_{s^3}\)</span>
+を渡された証明者は <span class="math inline">\(h(f(s))\)</span> の結果
+<span class="math inline">\(h_{f(s)}\)</span>
+を計算することはできますが、<span class="math inline">\(f(s)\)</span> や
+<span class="math inline">\(s\)</span>
+が実際にどんな値かを知ることはできないのです。このような性質を離散対数性と言います。</p>
+<h3 id="検証">検証</h3>
+<p>検証者は、証明者に <span class="math inline">\(h(P(s))\)</span> と
+<span class="math inline">\(h(Q(s))\)</span>
+を計算してもらって、二つが正しいか確かめます。 <span
+class="math inline">\(a,b\)</span> は証明者が主張した入力と結果で、<span
+class="math inline">\(s\)</span> は検証者自身が知っています。</p>
+<p><span class="math display">\[
+h_{P(s)} - h_b = h_{Q(s)} (s - a)
+\]</span></p>
+<p>では、この式が成り立つか展開して確かめてみましょう。</p>
+<p><span class="math display">\[
+\begin{aligned}
+h_{P(s)} - h_b &amp;= h_{Q(s)} (s - a) \\[0.8em]
+h(P(s)) - h(b) &amp;= h(Q(s)) (s - a) \\[0.8em]
+h(P(s) - b) &amp;= h(Q(s)(s - a)) \\[0.8em]
+P(s) - b &amp;= Q(s)(s - a) \\
+\end{aligned}
+\]</span></p>
+<p>もし証明者が <span class="math inline">\(P(a)\)</span> が <span
+class="math inline">\(b&#39;\)</span>
+と嘘をついた場合でも、因数定理によって <span
+class="math inline">\(Q(x)\)</span>
+を作ることがまずできませんし、次を満たすような偽の <span
+class="math inline">\(h_{Q&#39;(s)}\)</span>
+も作ることができません。なぜなら、<span class="math inline">\(s\)</span>
+を知らないので、検証者が<span
+class="math inline">\(h_{Q&#39;(s)}\)</span>
+にどんな値を掛けるか分からず、どんな <span
+class="math inline">\(Q&#39;\)</span>
+を用意していいか分からないからです。</p>
+<p><span class="math display">\[
+h(Q&#39;(s)) \quad \stackrel{?}{=} \quad \frac{h_{P(s)} -
+h_{b&#39;}}{(s-a)}
+\]</span></p>
+<p>このような性質を持つ <span class="math inline">\(h(x)\)</span>
+をどう作るのかがまだ問題ですが、ランダム評価する <span
+class="math inline">\(s\)</span>
+と因数定理によって、検証者が大半の計算をせずに評価結果が正しいことを確かめられるようになりました。実際にはこの性質は楕円曲線上の演算によって得られますが、この章では深く触れません。</p>
+<h3 id="コミットメント">コミットメント</h3>
 <div class="note">
 <p>コラム: 楕円軌道</p>
 <p><em>執筆中: 惑星の軌道、ニュートンとケプラー</em></p>
 </div>
-<h2 id="ランダムオラクル">ランダム・オラクル</h2>
+<div class="note">
+<p>コラム: 楕円曲線暗号</p>
 <p><em>執筆中</em></p>
+</div>
+<h2 id="ランダムオラクル">ランダム・オラクル</h2>
+<p>ここまでで、知られて良い乱数 <span class="math inline">\(r_i,
+\beta_i\)</span> と、知られてはいけない乱数 <span
+class="math inline">\(s\)</span> が登場しました。</p>
+<p>乱数 <span class="math inline">\(s\)</span>
+は最後まで秘匿するとして、<span class="math inline">\(r_i,
+\beta_i\)</span>
+にかんしては、証明者に作ってもらい検証者が正く生成されたかを確かめるという方法を取ります。これによって、証明者と検証者のやり取りが一回切りになります。一度セットアップした
+<span class="math inline">\(h_{s^0},h_{s^1},..h_{s^i}\)</span>
+はこの後もずっと使いまわせるので、あとは証明者が正しい手順で生成した
+<span class="math inline">\(r_i\)</span> や <span
+class="math inline">\(g_i\)</span>
+などを一度に受け取り、検証するだけとなるのです。</p>
+<p>乱数の生成には、ハッシュ関数を使います。</p>
 <h2 id="ここまでの見取り図-1">ここまでの見取り図</h2>
 <p><em>執筆中</em></p>
 <p><br></p>
@@ -942,6 +1119,9 @@ g_n(r_n)\)</span> となることを確かめます。</p>
 <hr />
 <ul>
 <li>https://eprint.iacr.org/2025/385.pdf</li>
+<li>https://eprint.iacr.org/2025/419.pdf</li>
+<li>https://reilabs.notion.site/Spartan-on-WHIR-15bd2f80c8748076b9c3d427ad443864</li>
+<li>https://eprint.iacr.org/2022/420.pdf</li>
 </ul>
 </body>
 </html>

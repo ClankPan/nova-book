@@ -150,7 +150,7 @@ header {
   text-align: center;
 }
 #TOC li {
-  list-style: none;
+  /* list-style: none; */
   line-height: 2.5;
 }
 #TOC ul {
@@ -196,4 +196,10 @@ ul.task-list li input[type="checkbox"] {
   border-radius: 1em;
   padding: .5em 1em;
   margin-top: 3em;
+}
+
+.math.display {
+  display: block;      /* ブロック要素として扱う場合 */
+  margin-top: 3em;     /* 上側余白 */
+  margin-bottom: 3em;  /* 下側余白 */
 }
