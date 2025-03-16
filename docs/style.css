@@ -203,3 +203,18 @@ ul.task-list li input[type="checkbox"] {
   margin-top: 3em;     /* 上側余白 */
   margin-bottom: 3em;  /* 下側余白 */
 }
+
+figure {
+  text-align: center; 
+  margin-top: 3em;     /* 上側余白 */
+  margin-bottom: 3em;  /* 下側余白 */
+}
+
+figure img {
+  display: inline-block; /* 中身をインライン要素として中央寄せしやすく */
+  max-width: 100%;       /* レスポンシブ対応したいなら、幅を制限 */
+}
+
+figcaption {
+  font-size: small;
+}

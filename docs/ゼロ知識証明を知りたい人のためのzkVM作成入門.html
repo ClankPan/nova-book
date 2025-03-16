@@ -79,20 +79,12 @@ id="toc-変数の切り替え">変数の切り替え</a></li>
 </ul></li>
 <li><a href="#多項式への変換" id="toc-多項式への変換">多項式への変換</a>
 <ul>
-<li><a href="#全ての合計を求める記号-sum"
-id="toc-全ての合計を求める記号-sum">全ての合計を求める記号 <span
-class="math inline">\(\sum\)</span></a></li>
-<li><a href="#要素を取り出す記号-mij"
-id="toc-要素を取り出す記号-mij">要素を取り出す記号 <span
-class="math inline">\(M[i,j]\)</span></a></li>
-<li><a href="#制約式" id="toc-制約式">制約式</a></li>
-<li><a href="#行列の積の-i-行目" id="toc-行列の積の-i-行目">行列の積の
-<span class="math inline">\(i\)</span> 行目</a></li>
+<li><a href="#全ての合計を求める演算記号"
+id="toc-全ての合計を求める演算記号">全ての合計を求める演算記号</a></li>
 <li><a href="#行列の積を多項式で表現"
 id="toc-行列の積を多項式で表現">行列の積を多項式で表現</a></li>
-<li><a href="#要素を取り出す多項式-mxy"
-id="toc-要素を取り出す多項式-mxy">要素を取り出す多項式 <span
-class="math inline">\(M(x,y)\)</span></a></li>
+<li><a href="#要素を取り出す多項式"
+id="toc-要素を取り出す多項式">要素を取り出す多項式</a></li>
 <li><a href="#行列の積を表す多項式"
 id="toc-行列の積を表す多項式">行列の積を表す多項式</a></li>
 <li><a href="#合計でもゼロ" id="toc-合計でもゼロ">合計でもゼロ</a></li>
@@ -607,7 +599,7 @@ alt="変換の流れ" />
 </figure>
 <p>行列の積の規則は複雑ですが、中身は掛け算の足し算のみですので、適切に分解してあげれば難しいことはありません。上の行列の掛け算を、行列の
 <span class="math inline">\(i\)</span> 行目 <span
-class="math inline">\(j\)</span> 列目 を取り出す記号 <span
+class="math inline">\(j\)</span> 列目 を示す <span
 class="math inline">\([i,j]\)</span>
 の形で表してみると、次のようになります。</p>
 <p><span class="math display">\[
@@ -658,127 +650,35 @@ class="math inline">\(M3\)</span>
 <p><span class="math display">\[
 \sum_{j=0}^{2}{M1[0, j] \cdot M2[j]}
 \]</span></p>
-<p>このように、証明で使えるような多項式に行列の積を変換する方向性が見えてきました。いくつか馴染みのない記号（<span
-class="math inline">\(\sum\)</span> や <span
-class="math inline">\([i,j]\)</span>
-）が出てきたので、それらの使い方について軽く触れましょう。</p>
-<h3 id="全ての合計を求める記号-sum">全ての合計を求める記号 <span
-class="math inline">\(\sum\)</span></h3>
+<p>行列の積の規則は複雑ですが、結果の <span
+class="math inline">\(i\)</span>
+行列目は次のように表現することができます。これはまだ多項式ではありませんが、ひとまず多項式に近づけることができます。</p>
 <p><span class="math inline">\(\sum\)</span>
-の基本的な使い方は、「下に定義された変数を上に書かれた範囲まで順番に変化させていき、全てを足し合わせる」ように式を展開する記号です。例えば、
-<span class="math inline">\(f(x)\)</span> を <span
-class="math inline">\(1\)</span> から <span
-class="math inline">\(3\)</span>
-まで評価した時の合計を求める式を作りたければ、次のように書くことができます。</p>
+という知らない記号が出てきたので、まずはこちらから解説して、式の意味を追っていきましょう。</p>
+<h3 id="全ての合計を求める演算記号">全ての合計を求める演算記号</h3>
+<p><span class="math inline">\(\sum\)</span> は <span
+class="math inline">\(i\)</span>
+を0からN-1まで順番にあげていき、その和を取る演算記号です。まずは、 <span
+class="math inline">\(A\)</span> の部分についてみてみます。</p>
 <p><span class="math display">\[
-f(1) + f(2) + f(3) \quad \rightarrow \quad  \sum_{i=1}^{3}{f(i)}
+\sum_{i=0}^{N-1}{A[0,i]}
 \]</span></p>
-<h3 id="要素を取り出す記号-mij">要素を取り出す記号 <span
-class="math inline">\(M[i,j]\)</span></h3>
-<p><span class="math inline">\(M[i,j]\)</span> の使い方は、「行列 <span
-class="math inline">\(M\)</span> の <span
-class="math inline">\(i\)</span> 行 <span
-class="math inline">\(j\)</span>
-列の要素を取り出して置き換える」ように式を展開する記号です。例えば、
-<span class="math inline">\(m \times n\)</span> サイズの行列 <span
-class="math inline">\(M\)</span>
-のすべての要素を足し合わせるのであれば、この記号 <span
-class="math inline">\([i,j]\)</span> を使うと、次のようになります。</p>
+<p>この式は、行列 <span class="math inline">\(A\)</span>
+の0行目に対して、左からN個の要素を全て足し合わせるという意味になります。
+<span class="math inline">\(A[0,i]\)</span> を <span
+class="math inline">\(i\)</span>
+が0から順に参照していく流れです。では、次の式はどうなるでしょうか？</p>
 <p><span class="math display">\[
-M[0,0] + M[0,1] + ... + M[1,1] \quad \rightarrow \quad \sum_{i=0}^{m-1}
-\; \sum_{j=0}^{n-1}{M[i,j]}
+\sum_{i=0}^{N-1}{A[0,i] \cdot Z[i]}
 \]</span></p>
-<h3 id="制約式">制約式</h3>
-<p>行列の式を多項式に変換するのは、証明に適した形にしたいからでした。ここまでをいったん整理してみましょう。フィボナッチ数列の制約式は、次のような式でした。</p>
+<p>式は、「行列 <span class="math inline">\(A\)</span> の0行目の <span
+class="math inline">\(i\)</span> 番目の要素と <span
+class="math inline">\(Z\)</span> の <span
+class="math inline">\(i\)</span>
+番目の要素を掛けた値の合計」、という意味になります。実際に式を展開してみましょう。</p>
 <p><span class="math display">\[
 \begin{aligned}
-(a + b) \times 1 &amp;= c \\
-(b + c) \times 1 &amp;= d \\
-(c + d) \times 1 &amp;= e \\
-(d + e) \times 1 &amp;= f \\
-\end{aligned}
-\]</span></p>
-<p>また、これを行列で表すとこうなります。行列を使う理由は、変数の束縛を表現できるからでした。</p>
-<p><span class="math display">\[
-(A \cdot Z ) \circ (B \cdot Z) = C \cdot Z
-\]</span></p>
-<p><span class="math display">\[
-\begin{aligned}
-\left(
-\begin{bmatrix}
-  1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
-  0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
-  0 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
-  0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
-  \end{bmatrix}
-  \cdot
-  \begin{bmatrix}
-  a \\
-  b \\
-  c \\
-  d \\
-  e \\
-  f \\
-  0 \\
-  1 \\
-  \end{bmatrix}
-\right)
-\circ
-\left(
-  \begin{bmatrix}
-  0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
-  0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
-  0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
-  0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
-  \end{bmatrix}
-  \cdot
-  \begin{bmatrix}
-  a \\
-  b \\
-  c \\
-  d \\
-  e \\
-  f \\
-  0 \\
-  1 \\
-  \end{bmatrix}
-\right)
-\\
-\\ =
-\left(
-\begin{bmatrix}
-0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
-0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
-0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
-0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 \\
-\end{bmatrix}
-\cdot
-\begin{bmatrix}
-a \\
-b \\
-c \\
-d \\
-e \\
-f \\
-0 \\
-1 \\
-\end{bmatrix}
-\right)
-\end{aligned}
-\]</span></p>
-<h3 id="行列の積の-i-行目">行列の積の <span
-class="math inline">\(i\)</span> 行目</h3>
-<p>この式は、行列 <span class="math inline">\(A \cdot Z\)</span>
-の結果の <span class="math inline">\(i\)</span>
-行目の要素になります。</p>
-<p><span class="math display">\[
-\sum_{j=0}^{7}{A[i,j] \cdot Z[j]}
-\]</span></p>
-<p>では、<span class="math inline">\(0\)</span>
-行目が実際にどうなるか一緒に式を展開してみましょう。</p>
-<p><span class="math display">\[
-\begin{aligned}
-&amp;\sum_{j=0}^{7}{A[0,j] \cdot Z[j]} \\
+&amp;\sum_{i=0}^{N-1}{A[0,i] \cdot Z[i]} \\
 \\
 &amp; = A[0,0] \cdot Z[0] + A[0,1] \cdot Z[1] \\
 &amp; + A[0,2] \cdot Z[2] + A[0,3] \cdot Z[3] \\
@@ -790,70 +690,36 @@ class="math inline">\(i\)</span> 行目</h3>
 &amp;+ (0 \cdot c) + (0 \cdot d) \\
 &amp;+ (0 \cdot e) + (0 \cdot f) \\
 &amp;+ (0 \cdot 0) + (0 \cdot 1) \\
-\\
-&amp;= a + b
 \end{aligned}
 \]</span></p>
-<p>ここまでの、合計する記号 <span class="math inline">\(\sum\)</span>
-と要素を取り出す記号 <span class="math inline">\(M[i,j]\)</span>
-を使うと、行列の式の <span class="math inline">\(i\)</span>
-行目の結果を表すことができるようになります。</p>
-<p><span class="math display">\[
-\sum_{j=0}^{7}{A[i,j] \cdot Z[j]} \quad \cdot \quad
-\sum_{j=0}^{7}{B[i,j] \cdot Z[ij]} \quad = \quad \sum_{j=0}^{7}{C[i,j]
-\cdot Z[j]}
-\]</span></p>
-<p>この式はつまり、 <span class="math inline">\(i\)</span>
-行目の掛け算のことなので、 実際に <span
-class="math inline">\(i=0\)</span>
-で展開してみると、次が成り立つことがわかります。</p>
-<p><span class="math display">\[
-\begin{aligned}
-&amp;\sum_{j=0}^{7}{A[0,j] \cdot Z[j]} \quad \cdot \quad
-\sum_{j=0}^{7}{B[0,j] \cdot Z[ij]} \quad - \quad \sum_{j=0}^{7}{C[0,j]
-\cdot Z[j]} \\[0.8em]
-&amp;= (a + b) \cdot 1 - c \\[0.8em]
-&amp;= 0
-\end{aligned}
-\]</span></p>
+<p>このように、 <span class="math inline">\(\sum\)</span>
+は、変化させたい変数とその範囲を指定し、右に書かれた式を評価した合計をとります。</p>
 <h3 id="行列の積を多項式で表現">行列の積を多項式で表現</h3>
 <p>行列の積は、要素の積の合計ですので、先ほどの式は <span
 class="math inline">\(0\)</span>
 行目の計算と一致していることがわかると思います。</p>
-<p>ここまでは、 <span class="math inline">\(i\)</span> 行 <span
-class="math inline">\(j\)</span> 列の要素を取り出すのに、記号 <span
-class="math inline">\([i,j]\)</span>
-を使っていましたが、これは多項式ではありません。単に、式を展開するときに定数をどこから取ってくるかを指定しているにすぎません。</p>
-<p>最終的には証明でいる形の多項式にしなければならないので、記号 <span
-class="math inline">\([i,j]\)</span>
-も多項式で表されなければなりません。そこで、 <span
-class="math inline">\(x\)</span> 行 <span
-class="math inline">\(y\)</span> 列の要素を取り出す多項式 <span
-class="math inline">\(A(x,y)\)</span> を考えます。</p>
-<ul>
-<li><span class="math inline">\(A[i,j]\)</span> :
-「要素を取り出す記号」</li>
-<li><span class="math inline">\(A(x,y)\)</span> :
-「要素を取り出す多項式」</li>
-</ul>
+<p>上の式では、<span class="math inline">\(A[X,Y]\)</span>
+でX行Y列の要素を取り出していますが、これは多項式ではありません。単に、式を展開するときに定数をどこから取ってくるかを指定しているにすぎません。そこで、変数
+<span class="math inline">\(x\)</span>
+で要素を取り出せる多項式を考える必要があります。</p>
+<p><span class="math display">\[
+\sum_{i=0}^{N-1}{A[0,i] \cdot Z[i]} \quad \cdot \quad
+\sum_{i=0}^{N-1}{B[0,i] \cdot Z[i]} \quad = \quad
+\sum_{i=0}^{N-1}{C[0,i] \cdot Z[i]}
+\]</span></p>
 <p><span class="math display">\[
 \begin{aligned}
-&amp;f(x) = \sum_{y=0}^{7}{A(x,y) \cdot Z(y)} \quad \cdot \quad
-\sum_{y=0}^{7}{B(x,y) \cdot Z(y)} \quad - \quad \sum_{y=0}^{7}{C(x,y)
-\cdot Z(y)}
+&amp;f(x) = \sum_{i=0}^{N-1}{A(x,i) \cdot Z(i)} \quad \cdot \quad
+\sum_{i=0}^{N-1}{B(x,i) \cdot Z(i)} \quad - \quad
+\sum_{i=0}^{N-1}{C(x,i) \cdot Z(i)}, \\
+&amp;\{x | 0 \le x \lt M \}
 \end{aligned}
 \]</span></p>
 <p><span class="math inline">\(A(x,y)\)</span>
 などをどう作るかは置いておいて、<span
 class="math inline">\(f(x)=0\)</span>
-の形に近くなってきました。この式は、0から4の区間なら0になります。証明で使うサムチェックは、ある区間の合計が0になることを証明できるので、最終的にこの形に持っていければよさそうです。計算を多項式へと変換する工程もいよいよ最後の段階になりました。</p>
-<figure>
-<img src="figures/変換の流れ、行列の積を多項式で.drawio.svg"
-alt="変換の流れ" />
-<figcaption aria-hidden="true">変換の流れ</figcaption>
-</figure>
-<h3 id="要素を取り出す多項式-mxy">要素を取り出す多項式 <span
-class="math inline">\(M(x,y)\)</span></h3>
+の形に近くなってきました。この式は、0からM-1の区間なら0になります。サムチェックは、ある区間の合計が0になることを証明できるので、最終的にこの形に持っていければよさそうです。</p>
+<h3 id="要素を取り出す多項式">要素を取り出す多項式</h3>
 <p><span class="math inline">\(A(x,y)\)</span>
 を作るにはどうしたらいいでしょうか？　まずは変数が1つの<span
 class="math inline">\(Z(x)\)</span> から考えてみることにします。</p>
