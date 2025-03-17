@@ -19,7 +19,7 @@ header-includes:
 
 # はじめに
 
-*このオンラインブックは執筆中です。完成版ではありません。[フィードバック](https://docs.google.com/forms/d/e/1FAIpQLSd5NN8awATTEVN4kI_itnnJRNdEEgkoEnRFLuUaoxmLBgJZZQ/viewform?usp=header) はこちらからお願いいたします。2025年6月の完成を目指しています。*
+*このオンラインブックは執筆中です。完成版ではありません。[フィードバック](https://docs.google.com/forms/d/e/1FAIpQLSd5NN8awATTEVN4kI_itnnJRNdEEgkoEnRFLuUaoxmLBgJZZQ/viewform?usp=header) はこちらからお願いいたします。2025年6月の完成を目指しています。現在は推敲と校正前ですので、誤字脱字や文章におかしな部分がありますが、ご容赦ください*
 
 本書では、アセンブリ言語にコンパイルされたプログラムの実行を証明する仮想マシン、つまりzkVMを作成を通して、ゼロ知識証明について学びます。
 
