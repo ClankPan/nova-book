@@ -947,12 +947,22 @@ Z(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8) &amp;= (x_1 \cdot a) + (x_2
 &amp;+ (x_7 \cdot 0) + (x_8 \cdot 1)
 \end{aligned}
 \]</span></p>
+<p>使い方は、3番目の要素を取り出したければ、3つ目の変数のみを <span
+class="math inline">\(1\)</span> にすればいいのです。</p>
+<p><span class="math display">\[
+Z(0,0,1,0,0,0,0,0) = c
+\]</span></p>
 <p>しかし、これでは変数の数が多い上に、2つ以上を選択してその合計値を取ってくることが出来てしまします。そこで、<span
 class="math inline">\(Z\)</span> の <span
 class="math inline">\(n\)</span>
 番目の要素を指定するのに、二進数で渡せるようにします。これだと、要素が8個ならば3つの変数だけでよく、さらに同時に1つの要素しか選択できません。この二進数をうまいこと
 <span class="math inline">\({0,1}\)</span>
 となる係数に変換できればいいのです。</p>
+<p>3は二進数では <span class="math inline">\(0b011\)</span>
+ですので、このような感じで3つ目の要素を指定できれば、いいわけです。</p>
+<p><span class="math display">\[
+Z(0,1,1) = c
+\]</span></p>
 <p>用意するのは、2つの二進数が一致すれば <span
 class="math inline">\(1\)</span> , 異なれば <span
 class="math inline">\(0\)</span>
@@ -1152,6 +1162,11 @@ Sumcheck Protocolの肝なのです。</p>
 <figure>
 <img src="figures/計算の証明.drawio.svg" alt="全体の流れ" />
 <figcaption aria-hidden="true">全体の流れ</figcaption>
+</figure>
+<p>さらに、サムチェック・プロトコルを使った証明の中にもいくつかのステップがあります。これら三つの証明を組み合わせることで、全体の証明がなされます。今回はサムチェックを使っていますが、このような構成はよくあるので、ぜひ覚えておきましょう。</p>
+<figure>
+<img src="figures/証明の流れ.drawio.svg" alt="証明の流れ" />
+<figcaption aria-hidden="true">証明の流れ</figcaption>
 </figure>
 <div class="note">
 <p>コラム: プロトコル</p>
@@ -1418,6 +1433,7 @@ h_{b&#39;}}{(s-a)}
 class="math inline">\(s\)</span>
 と因数定理によって、検証者が大半の計算をせずに評価結果が正しいことを確かめられるようになりました。実際にはこの性質は楕円曲線上の演算によって得られますが、この章では深く触れません。</p>
 <h3 id="コミットメント-執筆中">コミットメント <em>執筆中</em></h3>
+<p>ここで用語を一度整理しましょう。</p>
 <div class="note">
 <p>コラム: 楕円軌道</p>
 <p><em>執筆中: 惑星の軌道、ニュートンとケプラー</em></p>
