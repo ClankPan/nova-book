@@ -1285,9 +1285,9 @@ $g(x)$ を全てのXで評価した合計が $v$ であることをサムチェ�
 $$
 \begin{aligned}
 g(r') &= \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(r') + \gamma^4 \cdot Q(r') \\[0.8em]
-&= \sum_{j=\{1,2,3\}} \gamma^j \cdot H_i(r') \cdot eq(r, r') + \gamma^4 \cdot G(r) \cdot eq(\beta, r) \\[0.8em]
-&= \sum_{j=\{1,2,3\}} \gamma^j \cdot \sigma_i \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r) \\[0.8em]
-&= (\gamma \sigma_1 + \gamma^2 \sigma_2 + \gamma^3 \sigma_3) \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r) \\[0.8em]
+&= \sum_{j=\{1,2,3\}} \gamma^j \cdot H_i(r') \cdot eq(r, r') + \gamma^4 \cdot G(r') \cdot eq(\beta, r') \\[0.8em]
+&= \sum_{j=\{1,2,3\}} \gamma^j \cdot \sigma_i \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r') \\[0.8em]
+&= (\gamma \sigma_1 + \gamma^2 \sigma_2 + \gamma^3 \sigma_3) \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r') \\[0.8em]
 \end{aligned}
 $$
 
