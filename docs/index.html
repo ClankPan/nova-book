@@ -133,15 +133,12 @@ id="toc-サムチェックプロトコル-執筆中">サムチェック・プロ
 id="toc-ここまでの見取り図-執筆中-1">ここまでの見取り図
 <em>執筆中</em></a></li>
 </ul></li>
-<li><a href="#計算の畳み込み-執筆中"
-id="toc-計算の畳み込み-執筆中">計算の畳み込み <em>執筆中</em></a>
+<li><a href="#計算の畳み込み" id="toc-計算の畳み込み">計算の畳み込み</a>
 <ul>
-<li><a href="#証明の再帰とは-執筆中"
-id="toc-証明の再帰とは-執筆中">証明の再帰とは <em>執筆中</em></a></li>
-<li><a href="#畳み込みとは-執筆中"
-id="toc-畳み込みとは-執筆中">畳み込みとは <em>執筆中</em></a></li>
-<li><a href="#hypernova-執筆中" id="toc-hypernova-執筆中">HyperNova
-<em>執筆中</em></a>
+<li><a href="#証明の再帰とは"
+id="toc-証明の再帰とは">証明の再帰とは</a></li>
+<li><a href="#畳み込みとは" id="toc-畳み込みとは">畳み込みとは</a></li>
+<li><a href="#hypernova" id="toc-hypernova">HyperNova</a>
 <ul>
 <li><a href="#多重線形多項式コミットメント-執筆中"
 id="toc-多重線形多項式コミットメント-執筆中">多重線形多項式コミットメント
@@ -1487,10 +1484,131 @@ class="math inline">\(g_i\)</span>
 <em>執筆中</em></h2>
 <p><br></p>
 <hr />
-<h1 id="計算の畳み込み-執筆中">計算の畳み込み <em>執筆中</em></h1>
-<h2 id="証明の再帰とは-執筆中">証明の再帰とは <em>執筆中</em></h2>
-<h2 id="畳み込みとは-執筆中">畳み込みとは <em>執筆中</em></h2>
-<h2 id="hypernova-執筆中">HyperNova <em>執筆中</em></h2>
+<h1 id="計算の畳み込み">計算の畳み込み</h1>
+<p>フィボナッチ数列はご存知の通り、再帰のプログラムで書くことができます。つまり、計算を続けようと思えばいくらでも続けることができるはずですが、“計算の変換”
+で示した方法では、固定の回数しか表すことができませんでした。この章では、いかに繰り返しを含む計算を証明するかを解説していきます。特に、プログラムにはループはよく含まれ、CPUの動作も繰り返しですので、この挙動はzkVMの作る上で欠かせません。</p>
+<p>このままだと、再帰が含まれる計算は、繰り返した回数だけ証明が増えて行ってしまします。これでは、Succient（簡潔）ではありません。</p>
+<figure>
+<img src="figures/再帰がある計算の問題.drawio.svg"
+alt="再帰がある計算の問題点" />
+<figcaption aria-hidden="true">再帰がある計算の問題点</figcaption>
+</figure>
+<h3 id="証明の再帰とは">証明の再帰とは</h3>
+<p>繰り返しを含む計算を証明する方法として、まず考えられるのが、検証の計算を証明してしまうという方法です。この方法では、前の計算が正しかったことを検証し、その結果を今回の証明で入力として使います。そして、今回の計算結果とその証明は、次の再帰証明で使われるというわけです。最終的に、検証者は一番最後の証明だけを検証すれば、その証明には前の証明が正しいことが含まれているわけですから、一度の検証だけで済みます。</p>
+<figure>
+<img src="figures/再帰証明.drawio.svg" alt="再帰証明" />
+<figcaption aria-hidden="true">再帰証明</figcaption>
+</figure>
+<p>このようにしていけば、フィボナッチのような繰り返しを好きな回数だけ計算した結果を証明できるわけですが、繰り返しのたびに証明・検証を行うことは、非常に大きなオーバーヘッドとなります。</p>
+<h3 id="畳み込みとは">畳み込みとは</h3>
+<p>そこで考えられたのが、証明を最後まで遅延させることで証明・検証のオーバーヘッドを避けるFoldoing-Scheme（畳み込み）です。</p>
+<p><em>TODO: 再帰と畳み込みの明確な違いの説明</em></p>
+<figure>
+<img src="figures/畳み込み.drawio.svg" alt="畳み込み" />
+<figcaption aria-hidden="true">畳み込み</figcaption>
+</figure>
+<h2 id="hypernova">HyperNova</h2>
+<p>ここからは、どのように計算を折りたたんでいくかを考えていきます。HyperNovaの根幹は、「多項式に変換した2つの計算を1つの多項式に折りたたむ」ことにあります。</p>
+<figure>
+<img src="figures/多項式のマージ.drawio.svg" alt="多項式の折りたたみ" />
+<figcaption aria-hidden="true">多項式の折りたたみ</figcaption>
+</figure>
+<p>制約式を変換した多項式は次のようなものでした。</p>
+<p><span class="math display">\[
+G(X) = \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot \tilde{Z}(y)
+\cdot \sum_{y\in \{0,1\}^{\log N}} \tilde{B}(X, y) \cdot \tilde{Z}(y)
+- \sum_{y\in \{0,1\}^{\log N}} \tilde{C}(X, y) \cdot \tilde{Z}(y)
+\]</span></p>
+<p>さらに、この制約多項式をサムチェックで使える形にしたものは、次のようなものでした。</p>
+<p><span class="math display">\[
+Q(X) = G(X) \cdot eq(\beta, X)
+\]</span></p>
+<p><span class="math inline">\(Q(X)\)</span>
+はサムチェック・プロトコルによって　<span class="math inline">\(\sum_{X
+\in \{0,1\}^{2}}Q(X) = 0\)</span> を証明する訳ですが、 <span
+class="math inline">\(Q\)</span> の内部、つまり <span
+class="math inline">\(G\)</span> の内部にも三つの <span
+class="math inline">\(\sum\)</span> が隠れています。</p>
+<p>サムチェック・プロトコルでは <span
+class="math inline">\(Q(r)\)</span>
+を評価しますが、内側の合計（<code>InnerSum</code>）、外側の合計（<code>OuterSum</code>）を区別して評価します。</p>
+<ul>
+<li><p><code>InnerSum</code>: <span class="math inline">\(v_i =
+\sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z}(y)\)</span></p></li>
+<li><p><code>OuterSum</code>: <span class="math inline">\((v_1 \cdot v_2
+- v_3) \cdot eq(\beta, r)\)</span></p></li>
+</ul>
+<p><code>InnerSum</code>
+には制約多項式の計算が全て含まれているので重いですが、<code>OuterSum</code>には
+<span class="math inline">\(eq\)</span>
+しかないのでサムチェックにはほとんどコストがかかりません。</p>
+<p>HyperNovaでは、この <code>InnerSum</code>
+を折りたたみ、一番最後までサムチェックを遅延させることで、再帰証明よりも高速な再帰を行うことができます。</p>
+<figure>
+<img src="figures/sumのマージ.drawio.svg" alt="Sumの結合" />
+<figcaption aria-hidden="true">Sumの結合</figcaption>
+</figure>
+<p><span class="math display">\[
+\begin{aligned}
+H_i(X) &amp;= \sum_{y\in B_y} \tilde{M_i}(X, y) \cdot \tilde{Z}(y),
+\\[0.8em]
+L_i(X) &amp;= H_i(X) \cdot eq(r, X), \\
+\\
+H_i(r) &amp;= \sum_{x\in B_x} L_i(x)
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(H_i(r) = \sum_{x\in B_x} L_i(x)\)</span>
+が成り立つことは直観的には理解が難しいですが、分解してみるとわかります。</p>
+<p><span class="math inline">\(L_i(x)\)</span> によって、<span
+class="math inline">\(H_i(r)\)</span>
+をHyperBoolean上の合計に置き換えることができたので、他のサムチェックと線型結合できるようになります。</p>
+<p><span class="math display">\[
+v = \sum_{j=\{1,2,3\}} \gamma^j \cdot v_j
+\]</span></p>
+<p><span class="math display">\[
+g(x) = \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(x) + \gamma^4 \cdot Q(x)
+\]</span></p>
+<p><span class="math inline">\(g(x)\)</span> を全てのXで評価した合計が
+<span class="math inline">\(v\)</span>
+であることをサムチェックで証明します。　<span
+class="math inline">\(Q(x)\)</span> はどのパターンでもゼロになるので、
+<span class="math inline">\(\sum_{x \in B_x}g(x) = v\)</span>
+となるはずです。</p>
+<p>サムチェックで <span class="math inline">\(g(x)\)</span>
+を証明すると、 <span class="math inline">\(g(r&#39;)\)</span>
+を評価する必要があり、この中にもさらに<code>InnerSum</code>が隠れていますので、これを取り出してあげます。</p>
+<p><span class="math display">\[
+\begin{aligned}
+g(r&#39;) &amp;= \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(r&#39;) +
+\gamma^4 \cdot Q(r&#39;) \\[0.8em]
+&amp;= \sum_{j=\{1,2,3\}} \gamma^j \cdot H_i(r&#39;) \cdot eq(r, r&#39;)
++ \gamma^4 \cdot G(r) \cdot eq(\beta, r) \\[0.8em]
+&amp;= \sum_{j=\{1,2,3\}} \gamma^j \cdot \sigma_i \cdot eq(r, r&#39;) +
+\gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r)
+\\[0.8em]
+&amp;= (\gamma \sigma_1 + \gamma^2 \sigma_2 + \gamma^3 \sigma_3) \cdot
+eq(r, r&#39;) + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3)
+\cdot eq(\beta, r) \\[0.8em]
+\end{aligned}
+\]</span></p>
+<p>この <span class="math inline">\(\sigma, \theta\)</span>
+は、<code>InnerSum</code> として、 <code>OuterSumcheck</code>
+から取り出します。</p>
+<p><span class="math display">\[
+v_i&#39; = \sigma_i + \rho \cdot \theta_i = \sum_{y\in B_y}
+\tilde{M_i}(r&#39;, y) \cdot (\tilde{Z_1}(y) + \rho \cdot
+\tilde{Z_2}(y))
+\]</span></p>
+<p>再帰します。</p>
+<p><span class="math display">\[
+\begin{aligned}
+H_i&#39;(X) &amp;= \sum_{y\in B_y} \tilde{M_i}(X, y) \cdot
+\tilde{Z&#39;}(y), \\[0.8em]
+L_i&#39;(X) &amp;= H_i&#39;(X) \cdot eq(r&#39;, X), \\
+\\
+H_i&#39;(r&#39;) &amp;= \sum_{x\in B_x} L_i&#39;(x) = v_i&#39;
+\end{aligned}
+\]</span></p>
 <h3
 id="多重線形多項式コミットメント-執筆中">多重線形多項式コミットメント
 <em>執筆中</em></h3>

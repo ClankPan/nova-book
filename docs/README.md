@@ -1197,13 +1197,116 @@ $P(a) = b$ を証明するには、証明者はこの $h_{P(a)}$ と $h_Q(s)$ �
 
 ---
 
-# 計算の畳み込み *執筆中*
+# 計算の畳み込み
 
-## 証明の再帰とは *執筆中*
+フィボナッチ数列はご存知の通り、再帰のプログラムで書くことができます。つまり、計算を続けようと思えばいくらでも続けることができるはずですが、"計算の変換" で示した方法では、固定の回数しか表すことができませんでした。この章では、いかに繰り返しを含む計算を証明するかを解説していきます。特に、プログラムにはループはよく含まれ、CPUの動作も繰り返しですので、この挙動はzkVMの作る上で欠かせません。
 
-## 畳み込みとは *執筆中*
+このままだと、再帰が含まれる計算は、繰り返した回数だけ証明が増えて行ってしまします。これでは、Succient（簡潔）ではありません。
 
-## HyperNova *執筆中*
+![再帰がある計算の問題点](figures/再帰がある計算の問題.drawio.svg "")
+
+### 証明の再帰とは
+
+繰り返しを含む計算を証明する方法として、まず考えられるのが、検証の計算を証明してしまうという方法です。この方法では、前の計算が正しかったことを検証し、その結果を今回の証明で入力として使います。そして、今回の計算結果とその証明は、次の再帰証明で使われるというわけです。最終的に、検証者は一番最後の証明だけを検証すれば、その証明には前の証明が正しいことが含まれているわけですから、一度の検証だけで済みます。
+
+![再帰証明](figures/再帰証明.drawio.svg "")
+
+このようにしていけば、フィボナッチのような繰り返しを好きな回数だけ計算した結果を証明できるわけですが、繰り返しのたびに証明・検証を行うことは、非常に大きなオーバーヘッドとなります。
+
+### 畳み込みとは
+
+そこで考えられたのが、証明を最後まで遅延させることで証明・検証のオーバーヘッドを避けるFoldoing-Scheme（畳み込み）です。
+
+*TODO: 再帰と畳み込みの明確な違いの説明*
+
+![畳み込み](figures/畳み込み.drawio.svg "")
+
+## HyperNova
+
+ここからは、どのように計算を折りたたんでいくかを考えていきます。HyperNovaの根幹は、「多項式に変換した2つの計算を1つの多項式に折りたたむ」ことにあります。
+
+![多項式の折りたたみ](figures/多項式のマージ.drawio.svg "")
+
+制約式を変換した多項式は次のようなものでした。
+
+
+$$
+G(X) = \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot \tilde{Z}(y) 
+\cdot \sum_{y\in \{0,1\}^{\log N}} \tilde{B}(X, y) \cdot \tilde{Z}(y)
+- \sum_{y\in \{0,1\}^{\log N}} \tilde{C}(X, y) \cdot \tilde{Z}(y)
+$$
+
+さらに、この制約多項式をサムチェックで使える形にしたものは、次のようなものでした。
+
+$$
+Q(X) = G(X) \cdot eq(\beta, X)
+$$
+
+$Q(X)$ はサムチェック・プロトコルによって　$\sum_{X \in \{0,1\}^{2}}Q(X) = 0$ を証明する訳ですが、 $Q$ の内部、つまり $G$ の内部にも三つの $\sum$ が隠れています。
+
+サムチェック・プロトコルでは $Q(r)$ を評価しますが、内側の合計（`InnerSum`）、外側の合計（`OuterSum`）を区別して評価します。
+
+- `InnerSum`: $v_i = \sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z}(y)$
+
+- `OuterSum`: $(v_1 \cdot v_2 - v_3) \cdot eq(\beta, r)$
+
+`InnerSum` には制約多項式の計算が全て含まれているので重いですが、`OuterSum`には $eq$ しかないのでサムチェックにはほとんどコストがかかりません。
+
+HyperNovaでは、この `InnerSum` を折りたたみ、一番最後までサムチェックを遅延させることで、再帰証明よりも高速な再帰を行うことができます。
+
+![Sumの結合](figures/sumのマージ.drawio.svg "")
+
+$$
+\begin{aligned}
+H_i(X) &= \sum_{y\in B_y} \tilde{M_i}(X, y) \cdot \tilde{Z}(y), \\[0.8em]
+L_i(X) &= H_i(X) \cdot eq(r, X), \\
+\\
+H_i(r) &= \sum_{x\in B_x} L_i(x)
+\end{aligned}
+$$
+
+$H_i(r) = \sum_{x\in B_x} L_i(x)$ が成り立つことは直観的には理解が難しいですが、分解してみるとわかります。
+
+$L_i(x)$ によって、$H_i(r)$ をHyperBoolean上の合計に置き換えることができたので、他のサムチェックと線型結合できるようになります。
+
+$$
+v = \sum_{j=\{1,2,3\}} \gamma^j \cdot v_j
+$$
+
+$$
+g(x) = \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(x) + \gamma^4 \cdot Q(x)
+$$
+
+$g(x)$ を全てのXで評価した合計が $v$ であることをサムチェックで証明します。　$Q(x)$ はどのパターンでもゼロになるので、 $\sum_{x \in B_x}g(x) = v$ となるはずです。
+
+サムチェックで $g(x)$ を証明すると、 $g(r')$ を評価する必要があり、この中にもさらに`InnerSum`が隠れていますので、これを取り出してあげます。
+
+
+$$
+\begin{aligned}
+g(r') &= \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(r') + \gamma^4 \cdot Q(r') \\[0.8em]
+&= \sum_{j=\{1,2,3\}} \gamma^j \cdot H_i(r') \cdot eq(r, r') + \gamma^4 \cdot G(r) \cdot eq(\beta, r) \\[0.8em]
+&= \sum_{j=\{1,2,3\}} \gamma^j \cdot \sigma_i \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r) \\[0.8em]
+&= (\gamma \sigma_1 + \gamma^2 \sigma_2 + \gamma^3 \sigma_3) \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r) \\[0.8em]
+\end{aligned}
+$$
+
+この $\sigma, \theta$ は、`InnerSum` として、 `OuterSumcheck` から取り出します。
+
+$$
+v_i' = \sigma_i + \rho \cdot \theta_i = \sum_{y\in B_y} \tilde{M_i}(r', y) \cdot (\tilde{Z_1}(y) + \rho \cdot \tilde{Z_2}(y))
+$$
+
+再帰します。
+
+$$
+\begin{aligned}
+H_i'(X) &= \sum_{y\in B_y} \tilde{M_i}(X, y) \cdot \tilde{Z'}(y), \\[0.8em]
+L_i'(X) &= H_i'(X) \cdot eq(r', X), \\
+\\
+H_i'(r') &= \sum_{x\in B_x} L_i'(x) = v_i'
+\end{aligned}
+$$
 
 ### 多重線形多項式コミットメント *執筆中*
 
