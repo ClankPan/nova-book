@@ -1221,96 +1221,169 @@ $P(a) = b$ を証明するには、証明者はこの $h_{P(a)}$ と $h_Q(s)$ �
 
 ![畳み込み](figures/畳み込み.drawio.svg "")
 
-## HyperNova
+## HyperNova *執筆中*
 
 ここからは、どのように計算を折りたたんでいくかを考えていきます。HyperNovaの根幹は、「多項式に変換した2つの計算を1つの多項式に折りたたむ」ことにあります。
 
 ![多項式の折りたたみ](figures/多項式のマージ.drawio.svg "")
 
-制約式を変換した多項式は次のようなものでした。
+では、どのように畳み込むかというと、サムチェックを行いたい二つの多項式を一つにしてサムチェックを行い、その時に内部に現れる多項式をさらに次のサムチェックへ送り出します。
+
+![Sumの結合](figures/sumのマージ.drawio.svg "")
+
+そもそも、制約が満たされているかは、$Q(X)$ を全てのパターンの $X$ で評価した合計がゼロであることをサムチェックで証明していました。
 
 
 $$
-G(X) = \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot \tilde{Z}(y) 
+\sum_{x \in B_x} Q(x) = 0
+$$
+
+$$
+\left\{
+\begin{aligned}
+Q(X) &= G(X) \cdot eq(\beta, X), \\[0.8em]
+G(X) &= \sum_{y\in \{0,1\}^{\log N}} \tilde{A}(X, y) \cdot \tilde{Z}(y) 
 \cdot \sum_{y\in \{0,1\}^{\log N}} \tilde{B}(X, y) \cdot \tilde{Z}(y)
 - \sum_{y\in \{0,1\}^{\log N}} \tilde{C}(X, y) \cdot \tilde{Z}(y)
+\end{aligned}
+\right.
 $$
 
-さらに、この制約多項式をサムチェックで使える形にしたものは、次のようなものでした。
+サムチェックを行う過程で、検証者は $Q(X)$ の全ての変数をランダムな点で評価した $Q(r)$ を計算しなければなりませんが、$G(X)$ の内部には3つのサムがさらに隠れていて、直接これを計算しなければなりません。
 
-$$
-Q(X) = G(X) \cdot eq(\beta, X)
-$$
+これは大きなコストなので、内側のサムを直接計算する代わりに証明者から与えられた値を使い、外側のサムを検証した後に、内側のサムをサムチェックで検証することが基本的なアイディアです。
 
-$Q(X)$ はサムチェック・プロトコルによって　$\sum_{X \in \{0,1\}^{2}}Q(X) = 0$ を証明する訳ですが、 $Q$ の内部、つまり $G$ の内部にも三つの $\sum$ が隠れています。
 
-サムチェック・プロトコルでは $Q(r)$ を評価しますが、内側の合計（`InnerSum`）、外側の合計（`OuterSum`）を区別して評価します。
+$Q(r)$ の評価は、内側の合計（`InnerSum`）、外側の合計（`OuterSum`）に分けることができます。
 
 - `InnerSum`: $v_i = \sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z}(y)$
 
 - `OuterSum`: $(v_1 \cdot v_2 - v_3) \cdot eq(\beta, r)$
 
-`InnerSum` には制約多項式の計算が全て含まれているので重いですが、`OuterSum`には $eq$ しかないのでサムチェックにはほとんどコストがかかりません。
+`InnerSum` には制約が満たされているかの多項式の計算が全て含まれているので重いですが、`OuterSum`には $eq$ しかないのでサムチェックにはほとんどコストがかかりません。
 
 HyperNovaでは、この `InnerSum` を折りたたみ、一番最後までサムチェックを遅延させることで、再帰証明よりも高速な再帰を行うことができます。
 
-![Sumの結合](figures/sumのマージ.drawio.svg "")
+次の図は、畳み込みの全体の見取り図です。証明したい $Q(x)$ と前回の`InnerSum`を結合して、その証明で使われた新たな`InnerSum`を次の $Q'(x)$ と結合し、さらにそれを証明していく雰囲気が掴めると思います。
+
+![InnerSumの畳み込み](figures/式つきsumのマージ.drawio.svg "")
+
+
+では、流れを順番に追っていきましょう。
+
+### インカミング・サム（Incoming Sum）
+
+![Incoming Sum](figures/マージ、IncomingSum.drawio.svg "")
+
+`Incoming Sum`は、実際に証明したい制約を表す多項式です。これの合計がゼロであれば、制約式が満たされていることになります。
 
 $$
 \begin{aligned}
-H_i(X) &= \sum_{y\in B_y} \tilde{M_i}(X, y) \cdot \tilde{Z}(y), \\[0.8em]
-L_i(X) &= H_i(X) \cdot eq(r, X), \\
-\\
-H_i(r) &= \sum_{x\in B_x} L_i(x)
+Q(x) &= G(x) \cdot eq(\beta, x), \\[0.8em]
+G(x) &= \sum_{y\in B_y} \tilde{M_1}(x, y) \cdot \tilde{Z_1}(y) 
+\cdot \sum_{y\in B_y} \tilde{M_2}(x, y) \cdot \tilde{Z_1}(y)
+- \sum_{y\in B_y} \tilde{M_3}(x, y) \cdot \tilde{Z_1}(y)
 \end{aligned}
 $$
 
-$H_i(r) = \sum_{x\in B_x} L_i(x)$ が成り立つことは直観的には理解が難しいですが、分解してみるとわかります。
 
-$L_i(x)$ によって、$H_i(r)$ をHyperBoolean上の合計に置き換えることができたので、他のサムチェックと線型結合できるようになります。
+### インナー・サム（Inner Sum）
+
+![Inner Sum](figures/マージ、InnerSum.drawio.svg "")
+
+`Inner Sum`は、前回のサムチェックで証明を後回しにした多項式の合計、$v_1, v_2, v_3$ です。
+$L_i(x)$ は、全てのパターンの $x$ で評価した合計が $v_i$ となる多項式です。
 
 $$
-v = \sum_{j=\{1,2,3\}} \gamma^j \cdot v_j
+\begin{aligned}
+L_i(x) &= \sum_{y\in B_y} \tilde{M_i}(x, y) \cdot \tilde{Z_2}(y) \cdot eq(r, x), \\[0.8em]
+\sum_{x\in B_x} L_i(x) &\rightarrow \sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z_2}(y) = v_i
+\end{aligned}
 $$
 
+$L_i$ が成り立つことを直観的に理解するのは難しいので、詳しく見ていきましょう。
+
+まず、$v_i$ は次のように計算されます。これが前回のサムチェックで使われた訳です。注意して見て欲しいのが、ランダム $r$ で評価されているということです。
+
 $$
-g(x) = \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(x) + \gamma^4 \cdot Q(x)
+v_i = \sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z_2}(y)
 $$
 
-$g(x)$ を全てのXで評価した合計が $v$ であることをサムチェックで証明します。　$Q(x)$ はどのパターンでもゼロになるので、 $\sum_{x \in B_x}g(x) = v$ となるはずです。
+つまり、次が成り立つことを確認していきましょう。
 
-サムチェックで $g(x)$ を証明すると、 $g(r')$ を評価する必要があり、この中にもさらに`InnerSum`が隠れていますので、これを取り出してあげます。
+$$
+\begin{aligned}
+\sum_{x\in B_x} L_i(x) &= v_i\\[0.8em]
+\sum_{y\in B_y} \tilde{M_i}(x, y) \cdot \tilde{Z_2}(y) \cdot eq(r, x) &= \sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z_2}(y)\\[0.8em]
+\end{aligned}
+$$
 
+左辺から展開していきましょう。
+
+$$
+\begin{aligned}
+\text{左辺:　} &\sum_{x\in B_x} \sum_{y\in B_y} \tilde{M_i}(x, y) \cdot \tilde{Z_2}(y) \cdot eq(r, x) \\[0.8em]
+&= \sum_{x\in B_x}\sum_{y\in B_y} (\sum_{m \in B_x}\sum_{n \in B_y}{(M_i[m,n]\cdot eq(x,m)\cdot eq(y,n))} \cdot \sum_{n \in B_y}{(Z_2[n]\cdot eq(y,n))}) \cdot eq(r, x)\\[0.8em]
+&= \sum_{x\in B_x}\sum_{y\in B_y} (\sum_{m \in B_x}\sum_{n \in B_y}{M_i[m,n]\cdot Z_2[n] \cdot eq(x,m)\cdot eq(y,n)}) \cdot eq(r, x)\\[0.8em]
+&= (\sum_{m \in B_x}\sum_{n \in B_y}{M_i[m,n]\cdot Z_2[n] \cdot eq(m,m) \cdot eq(n,n)}) \cdot eq(r, m)\\[0.8em]
+&= \sum_{m \in B_x}\sum_{n \in B_y}{M_i[m,n]\cdot Z_2[n]} \cdot eq(r, m)\\[0.8em]
+\end{aligned}
+$$
+
+右辺も展開するとこのようになります。
+
+$$
+\begin{aligned}
+\text{右辺:　} &\sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z_2}(y) \\[0.8em]
+&= \sum_{y\in B_y}(\sum_{m \in B_x}\sum_{n \in B_y}{(M_i[m,n]\cdot eq(r,m)\cdot eq(y,n))} \cdot \sum_{n \in B_y}{(Z_2[n]\cdot eq(y,n))}) \\[0.8em]
+&= \sum_{y\in B_y}(\sum_{m \in B_x}\sum_{n \in B_y}{M_i[m,n] \cdot Z_2[n]\cdot eq(r,m)\cdot eq(y,n)}) \\[0.8em]
+&= \sum_{m \in B_x}\sum_{n \in B_y}{M_i[m,n]\cdot Z_2[n] \cdot eq(r,m)\cdot eq(n,n)} \\[0.8em]
+&= \sum_{m \in B_x}\sum_{n \in B_y}{M_i[m,n]\cdot Z_2[n] \cdot eq(r,m)} \\[0.8em]
+\end{aligned}
+$$
+
+### ランダム線形結合（Random Linear Combination）
+
+![ランダム線形結合](figures/マージ、ランダム線形結合.drawio.svg "")
+
+$$
+\begin{aligned}
+g(x) &= \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(x) + \gamma^4 \cdot Q(x)\\[0.8em]
+\sum_{x \in B_x} g(x) &\rightarrow \gamma v_1 + \gamma^2 v_2 + \gamma^3 v_3 + \gamma^4 0 = v
+\end{aligned}
+$$
+
+### アウター・サムチェック（Outer Sumcheck）
+
+![Outer Sumcheck](figures/マージ、OuterSumcheck.drawio.svg "")
 
 $$
 \begin{aligned}
 g(r') &= \sum_{j=\{1,2,3\}} \gamma^j \cdot L_i(r') + \gamma^4 \cdot Q(r') \\[0.8em]
 &= \sum_{j=\{1,2,3\}} \gamma^j \cdot H_i(r') \cdot eq(r, r') + \gamma^4 \cdot G(r') \cdot eq(\beta, r') \\[0.8em]
 &= \sum_{j=\{1,2,3\}} \gamma^j \cdot \sigma_i \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r') \\[0.8em]
-&= (\gamma \sigma_1 + \gamma^2 \sigma_2 + \gamma^3 \sigma_3) \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r') \\[0.8em]
+&= (\gamma \sigma_1 + \gamma^2 \sigma_2 + \gamma^3 \sigma_3) \cdot eq(r, r') + \gamma^4 \cdot (\theta_1 \cdot \theta_2 - \theta_3) \cdot eq(\beta, r'), \\
+\\
+\text{Inner Sum} &\left(
+\begin{aligned}
+v_i &= \sum_{y\in B_y} \tilde{M_i}(r, y) \cdot \tilde{Z_1}(y) \\
+\sigma_i &= \sum_{y\in B_y} \tilde{M_i}(r', y) \cdot \tilde{Z_1}(y) \\
+\theta_i &= \sum_{y\in B_y} \tilde{M_i}(r', y) \cdot \tilde{Z_2}(y) \\
+\end{aligned}
+\right.
 \end{aligned}
 $$
 
-この $\sigma, \theta$ は、`InnerSum` として、 `OuterSumcheck` から取り出します。
+### インナー・サム・ランダム線形結合（Inner Sum Randaom Linear Combination）
+
+![ランダム線形 InnerSum](figures/マージ、ランダム線形InnerSum.drawio.svg "")
 
 $$
 v_i' = \sigma_i + \rho \cdot \theta_i = \sum_{y\in B_y} \tilde{M_i}(r', y) \cdot (\tilde{Z_1}(y) + \rho \cdot \tilde{Z_2}(y))
 $$
 
-再帰します。
-
-$$
-\begin{aligned}
-H_i'(X) &= \sum_{y\in B_y} \tilde{M_i}(X, y) \cdot \tilde{Z'}(y), \\[0.8em]
-L_i'(X) &= H_i'(X) \cdot eq(r', X), \\
-\\
-H_i'(r') &= \sum_{x\in B_x} L_i'(x) = v_i'
-\end{aligned}
-$$
-
 ### 多重線形多項式コミットメント *執筆中*
 
-### 2重のサムチェック *執筆中*
 
 <br>
 
